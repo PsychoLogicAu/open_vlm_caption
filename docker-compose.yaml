@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  internvl2-8b:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: OpenGVLab
+        GIT_REPO: InternVL2-8B
+        # GIT_BRANCH: main
+        DIR: internvl2-8b
+        # pass through env vars to docker build
+        DOCKER_USER: $DOCKER_USER
+        HF_TOKEN: $HF_TOKEN
+        USERNAME: $USER
+        # EXAMPLE_FILE: internvl2-8b_example.py
+        # PIP_EXTRA: "accelerate bitsandbytes decord flash_attn sentencepiece timm transformers==4.37.2"
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: open_vlm_caption_internvl2-8b
+    container_name: open_vlm_caption_internvl2-8b
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
