@@ -14,10 +14,7 @@ RUN conda create --name conda python=${PYTHON_VERSION} pip
 RUN /opt/conda/envs/conda/bin/pip install --no-cache-dir --upgrade pip
 
 # Activate Conda environment and install necessary packages
-# TODO: torch 2.5 (drop the version specifiers)
-# https://pytorch.org/get-started/locally/
-# This was taking too long to build and I am impatient
-RUN /opt/conda/bin/conda run -n conda pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
+RUN /opt/conda/bin/conda run -n conda pip install torch torchvision torchaudio \
     --extra-index-url https://download.pytorch.org/whl/cu124
 
 # Step 2: Final image
