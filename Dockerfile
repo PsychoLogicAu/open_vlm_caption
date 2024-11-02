@@ -80,8 +80,10 @@ ARG GIT_BRANCH
 RUN test -z "$GIT_BRANCH" || git checkout $GIT_BRANCH
 
 # If the repository has a requirements.txt file, install the dependencies
-RUN export MAKEFLAGS="-j$(nproc)" && \
-    test -f requirements.txt && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt found"
+ARG DISABLE_REPOSITORY_DEPENDENCIES
+ENV DISABLE_REPOSITORY_DEPENDENCIES=${DISABLE_REPOSITORY_DEPENDENCIES}
+RUN test -n "${DISABLE_REPOSITORY_DEPENDENCIES}" && \
+    export MAKEFLAGS="-j$(nproc)" && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -r requirements.txt
 
 # If setup.py exists, install the package, do not fail if it does not exist
 RUN test -f setup.py && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -e . || echo "No setup.py found"
