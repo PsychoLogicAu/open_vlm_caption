@@ -28,3 +28,34 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+  ovis1.6-llama3.2-3b:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_DOMAIN: github.com
+        # GIT_ORG: AIDC-AI
+        GIT_ORG: PsychoLogicAu
+        GIT_REPO: Ovis
+        # GIT_BRANCH: main
+        GIT_BRANCH: feature/remove-pip-requirements
+        DIR: ovis1.6-llama3.2-3b
+        DISABLE_REPOSITORY_DEPENDENCIES: 1 # repo dependencies have incorrect version of torch
+        # pass through env vars to docker build
+        DOCKER_USER: $DOCKER_USER
+        HF_TOKEN: $HF_TOKEN
+        USERNAME: $USER
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: open_vlm_caption_ovis1.6-llama3.2-3b
+    container_name: open_vlm_caption_ovis1.6-llama3.2-3b
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
