@@ -28,3 +28,31 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+  instructblip-vicuna-7b:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: Salesforce
+        GIT_REPO: instructblip-vicuna-7b
+        GIT_BRANCH: main
+        DIR: instructblip-vicuna-7b
+        # pass through env vars to docker build
+        DOCKER_USER: $DOCKER_USER
+        HF_TOKEN: $HF_TOKEN
+        USERNAME: $USER
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: open_vlm_caption_instructblip-vicuna-7b
+    container_name: open_vlm_caption_instructblip-vicuna-7b
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
