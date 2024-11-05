@@ -10,6 +10,9 @@ import os
 import imghdr
 
 checkpoint = "Salesforce/instructblip-vicuna-7b"
+# checkpoint = "Salesforce/instructblip-vicuna-13b" # seems to hallucinate extra people into the scene
+# checkpoint = "Salesforce/instructblip-flan-t5-xl" # seems to hallucinate handbags into the scene
+# checkpoint = "Salesforce/instructblip-flan-t5-xxl" # gibberish
 quantization_config = BitsAndBytesConfig(
     load_in_8bit=True,
     llm_int8_enable_fp32_cpu_offload=True,
