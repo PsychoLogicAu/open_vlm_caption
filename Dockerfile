@@ -60,6 +60,14 @@ WORKDIR /app/
 RUN export MAKEFLAGS="-j$(nproc)" && \
     test -f requirements.txt && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -v -r requirements.txt || echo "No requirements.txt found"
 
+# Required for Ovis1.6-Gemma2-9B-GPTQ-Int4
+# TODO: separate Dockerfile
+RUN /opt/conda/bin/conda run -n conda pip install numpy transformers pillow gekko pandas
+ENV TORCH_CUDA_ARCH_LIST="8.9"
+RUN git clone https://github.com/AIDC-AI/AutoGPTQ.git && \
+    cd AutoGPTQ && \
+    /opt/conda/bin/conda run -n conda pip install -vvv --no-build-isolation -e .
+
 # Set HuggingFace credentials
 ARG HF_TOKEN
 ENV HF_TOKEN=${HF_TOKEN}
@@ -80,8 +88,10 @@ ARG GIT_BRANCH
 RUN test -z "$GIT_BRANCH" || git checkout $GIT_BRANCH
 
 # If the repository has a requirements.txt file, install the dependencies
-RUN export MAKEFLAGS="-j$(nproc)" && \
-    test -f requirements.txt && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt found"
+ARG DISABLE_REPOSITORY_DEPENDENCIES=0
+ENV DISABLE_REPOSITORY_DEPENDENCIES=${DISABLE_REPOSITORY_DEPENDENCIES}
+RUN test -n "${DISABLE_REPOSITORY_DEPENDENCIES}" && test -f requirements.txt && \
+    export MAKEFLAGS="-j$(nproc)" && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt found"
 
 # If setup.py exists, install the package, do not fail if it does not exist
 RUN test -f setup.py && /opt/conda/bin/conda run -n conda pip install --no-cache-dir -e . || echo "No setup.py found"
