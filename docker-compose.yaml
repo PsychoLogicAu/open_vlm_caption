@@ -33,12 +33,11 @@ services:
         context: .
         dockerfile: Dockerfile
         args:
-          GIT_DOMAIN: github.com
+          GIT_DOMAIN: huggingface.co
           GIT_ORG: AIDC-AI
-          GIT_REPO: Ovis
+          GIT_REPO: Ovis1.6-Gemma2-9B-GPTQ-Int4
           GIT_BRANCH: main
           DIR: ovis1.6-gemma2-9b
-          DISABLE_REPOSITORY_DEPENDENCIES: 1
           # pass through env vars to docker build
           DOCKER_USER: $DOCKER_USER
           HF_TOKEN: $HF_TOKEN
