@@ -39,17 +39,13 @@ services:
   ovis1.6-gemma2-9b:
       build:
         context: .
-        dockerfile: Dockerfile
+        dockerfile: ovis1.6-gemma2-9b/Dockerfile
         args:
           GIT_DOMAIN: huggingface.co
           GIT_ORG: AIDC-AI
           GIT_REPO: Ovis1.6-Gemma2-9B-GPTQ-Int4
           GIT_BRANCH: main
           DIR: ovis1.6-gemma2-9b
-          # pass through env vars to docker build
-          DOCKER_USER: $DOCKER_USER
-          HF_TOKEN: $HF_TOKEN
-          USERNAME: $USER
       shm_size: '16gb'
       deploy:
         resources:
@@ -58,8 +54,9 @@ services:
               - driver: nvidia
                 count: all
                 capabilities: [ gpu ]
-      image: open_vlm_caption_ovis1.6-gemma2-9b
-      container_name: open_vlm_caption_ovis1.6-gemma2-9b
+      image: ovis1.6-gemma2-9b
+      depends_on:
+      - cu124_torch25_base
       volumes:
         - ./data:/data
       stdin_open: true
