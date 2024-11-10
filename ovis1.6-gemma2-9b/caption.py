@@ -1,11 +1,12 @@
-import torch
+from auto_gptq import BaseQuantizeConfig
+from auto_gptq.modeling import OvisGemma2GPTQForCausalLM
 from PIL import Image
 from transformers import GenerationConfig
-from auto_gptq.modeling import OvisGemma2GPTQForCausalLM
-import os
 import imghdr
+import os
+import torch
 
-# load model
+# load pre-quantized model
 load_device = "cuda:0" # customize load device
 checkpoint = "AIDC-AI/Ovis1.6-Gemma2-9B-GPTQ-Int4"
 model = OvisGemma2GPTQForCausalLM.from_quantized(
@@ -13,6 +14,13 @@ model = OvisGemma2GPTQForCausalLM.from_quantized(
     device=load_device,
     trust_remote_code=True,
 )
+
+# Write the model structure to a file
+model_structure_file = f"/data/debug/{checkpoint}/model_structure.txt"
+os.makedirs(os.path.dirname(model_structure_file), exist_ok=True)
+with open(model_structure_file, "w") as file:
+    file.write(str(model))
+
 model.model.generation_config = GenerationConfig.from_pretrained(checkpoint)
 text_tokenizer = model.get_text_tokenizer()
 visual_tokenizer = model.get_visual_tokenizer()
