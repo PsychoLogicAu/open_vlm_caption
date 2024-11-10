@@ -91,17 +91,13 @@ services:
   salesforce_blip2:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Salesforce/blip2/Dockerfile
       args:
         GIT_DOMAIN: huggingface.co
         GIT_ORG: Salesforce
         GIT_REPO: blip2-opt-6.7b-coco
         GIT_BRANCH: main
         DIR: Salesforce/blip2
-        # pass through env vars to docker build
-        DOCKER_USER: $DOCKER_USER
-        HF_TOKEN: $HF_TOKEN
-        USERNAME: $USER
     shm_size: '16gb'
     deploy:
       resources:
@@ -110,10 +106,10 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
-    image: open_vlm_caption_salesforce_blip2
-    container_name: open_vlm_caption_salesforce_blip2
+    image: salesforce_blip2
+    depends_on:
+      - cu124_torch25_base
     volumes:
       - ./data:/data
     stdin_open: true
     tty: true
-  
