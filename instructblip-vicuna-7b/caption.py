@@ -16,18 +16,24 @@ checkpoint = "Salesforce/instructblip-vicuna-7b"
 quantization_config = BitsAndBytesConfig(
     load_in_8bit=True,
     llm_int8_enable_fp32_cpu_offload=True,
+    llm_int8_skip_modules=[
+        "vision_model",
+        "qformer",
+        "language_projection", 
+    ],
 )
-
 model = InstructBlipForConditionalGeneration.from_pretrained(
     checkpoint,
     quantization_config=quantization_config,
     device_map="auto",
-)
+).eval()
 processor = InstructBlipProcessor.from_pretrained(checkpoint)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-# model.to(device)
-model.eval()
+# Write the model structure to a file
+model_structure_file = f"/data/debug/{checkpoint}/model_structure.txt"
+os.makedirs(os.path.dirname(model_structure_file), exist_ok=True)
+with open(model_structure_file, "w") as file:
+    file.write(str(model))
 
 # ---
 # load query string from the text file /data/query.txt
@@ -56,9 +62,8 @@ for img_path in img_path_list:
     if os.path.exists(output_path):
         continue
 
-    # url = "https://raw.githubusercontent.com/salesforce/LAVIS/main/docs/_static/Confusing-Pictures.jpg"
     image = Image.open(img_path).convert("RGB")
-    inputs = processor(images=image, text=query, return_tensors="pt").to(device)
+    inputs = processor(images=image, text=query, return_tensors="pt").to("cuda")
 
     outputs = model.generate(
         **inputs,

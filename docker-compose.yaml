@@ -65,17 +65,13 @@ services:
   instructblip-vicuna-7b:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: instructblip-vicuna-7b/Dockerfile
       args:
         GIT_DOMAIN: huggingface.co
         GIT_ORG: Salesforce
         GIT_REPO: instructblip-vicuna-7b
         GIT_BRANCH: main
         DIR: instructblip-vicuna-7b
-        # pass through env vars to docker build
-        DOCKER_USER: $DOCKER_USER
-        HF_TOKEN: $HF_TOKEN
-        USERNAME: $USER
     shm_size: '16gb'
     deploy:
       resources:
@@ -84,12 +80,14 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
-    image: open_vlm_caption_instructblip-vicuna-7b
-    container_name: open_vlm_caption_instructblip-vicuna-7b
+    image: instructblip-vicuna-7b
+    depends_on:
+      - cu124_torch25_base
     volumes:
       - ./data:/data
     stdin_open: true
     tty: true
+    
   salesforce_blip2:
     build:
       context: .
