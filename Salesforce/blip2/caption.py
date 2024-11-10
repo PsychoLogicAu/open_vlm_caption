@@ -1,29 +1,39 @@
-# pip install accelerate bitsandbytes
 import torch
-import requests
 from PIL import Image
-from transformers import Blip2Processor, Blip2ForConditionalGeneration, BitsAndBytesConfig
+from transformers import (
+    Blip2Processor,
+    Blip2ForConditionalGeneration,
+    BitsAndBytesConfig,
+)
 import os
 import imghdr
 
+# checkpoint = "Salesforce/blip2-opt-6.7b-coco" # mostly blank output
+# checkpoint = "Salesforce/blip2-opt-2.7b" # mostly blank output
+# checkpoint = "Salesforce/blip2-opt-6.7b"  # mostly blank output
+checkpoint = "Salesforce/blip2-flan-t5-xl"  # very short descriptions
+# checkpoint = "Salesforce/blip2-flan-t5-xxl" # gibberish
 quantization_config = BitsAndBytesConfig(
     load_in_8bit=True,
     llm_int8_enable_fp32_cpu_offload=True,
+    llm_int8_skip_modules=[
+        "vision_model",
+        "qformer",
+        "language_projection",
+    ],
+)
+processor = Blip2Processor.from_pretrained(checkpoint)
+model = Blip2ForConditionalGeneration.from_pretrained(
+    checkpoint,
+    quantization_config=quantization_config,
+    device_map="auto",
 )
 
-# BLIP-2, OPT-6.7b, fine-tuned on COCO
-# checkpoint = "Salesforce/blip2-opt-6.7b-coco" # mostly blank output
-# BLIP-2, OPT-2.7b, pre-trained only
-# checkpoint = "Salesforce/blip2-opt-2.7b" # mostly blank output
-# BLIP-2, OPT-6.7b, pre-trained only
-# checkpoint = "Salesforce/blip2-opt-6.7b" # mostly blank output
-# BLIP-2, Flan T5-xl, pre-trained only
-checkpoint = "Salesforce/blip2-flan-t5-xl" # very short descriptions
-# BLIP-2, Flan T5-xxl, pre-trained only
-# checkpoint = "Salesforce/blip2-flan-t5-xxl" # gibberish
-
-processor = Blip2Processor.from_pretrained(checkpoint)
-model = Blip2ForConditionalGeneration.from_pretrained(checkpoint, quantization_config=quantization_config, device_map="auto")
+# Write the model structure to a file
+model_structure_file = f"/data/debug/{checkpoint}/model_structure.txt"
+os.makedirs(os.path.dirname(model_structure_file), exist_ok=True)
+with open(model_structure_file, "w") as file:
+    file.write(str(model))
 
 # load query string from the text file /data/query.txt
 with open("/data/query.txt", "r") as f:
@@ -54,7 +64,8 @@ for img_path in img_path_list:
     raw_image = Image.open(img_path).convert("RGB")
     inputs = processor(raw_image, query, return_tensors="pt").to("cuda", torch.float16)
 
-    out = model.generate(**inputs,
+    out = model.generate(
+        **inputs,
         do_sample=False,
         num_beams=5,
         max_length=256,
@@ -64,7 +75,6 @@ for img_path in img_path_list:
         length_penalty=1.0,
         temperature=1,
     )
-    print(processor.decode(out[0], skip_special_tokens=True))
     response = processor.decode(out[0], skip_special_tokens=True)
 
     print(f"{img_path}: {response}")
