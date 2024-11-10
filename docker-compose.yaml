@@ -1,19 +1,25 @@
-version: '3.9'
 services:
+  cu124_torch25_base:
+    build:
+      context: .
+      dockerfile: cu124_torch25_base/Dockerfile
+      args:
+        # pass through env vars to docker build
+        DOCKER_USER: $DOCKER_USER
+        HF_TOKEN: $HF_TOKEN
+        USERNAME: $USER
+    image: cu124_torch25_base:latest
+
   internvl2-8b:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: internvl2-8b/Dockerfile
       args:
         GIT_DOMAIN: huggingface.co
         GIT_ORG: OpenGVLab
         GIT_REPO: InternVL2-8B
         GIT_BRANCH: main
         DIR: internvl2-8b
-        # pass through env vars to docker build
-        DOCKER_USER: $DOCKER_USER
-        HF_TOKEN: $HF_TOKEN
-        USERNAME: $USER
     shm_size: '16gb'
     deploy:
       resources:
@@ -22,12 +28,14 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
-    image: open_vlm_caption_internvl2-8b
-    container_name: open_vlm_caption_internvl2-8b
+    image: internvl2-8b
+    depends_on:
+      - cu124_torch25_base
     volumes:
       - ./data:/data
     stdin_open: true
     tty: true
+
   ovis1.6-gemma2-9b:
       build:
         context: .
