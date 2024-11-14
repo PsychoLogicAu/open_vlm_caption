@@ -113,3 +113,29 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+
+  omlab_omchat-v2.0:
+    build:
+      context: .
+      dockerfile: omlab/omchat-v2.0/Dockerfile
+      args:
+        # GIT_DOMAIN: huggingface.co
+        # GIT_ORG: OpenGVLab
+        # GIT_REPO: omchat-v2.0-13B-single-beta_hf
+        # GIT_BRANCH: main
+        DIR: omlab/omchat-v2.0
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: omlab/omchat-v2.0
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
