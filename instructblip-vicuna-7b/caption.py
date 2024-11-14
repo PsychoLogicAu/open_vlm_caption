@@ -19,7 +19,7 @@ quantization_config = BitsAndBytesConfig(
     llm_int8_skip_modules=[
         "vision_model",
         "qformer",
-        "language_projection", 
+        "language_projection",
     ],
 )
 model = InstructBlipForConditionalGeneration.from_pretrained(
@@ -56,13 +56,23 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 for img_path in img_path_list:
-    output_path = f"{output_dir}/{img_path.split('/')[-1].split('.')[0]}.txt"
+    # Get name of the output file, excluding the extension
+    img_file_name = os.path.basename(img_path)
+    output_path = f"{output_dir}/{os.path.splitext(img_file_name)[0]}.txt"
 
     # If the output file already exists, skip the image
     if os.path.exists(output_path):
         continue
 
-    image = Image.open(img_path).convert("RGB")
+    try:
+        image = Image.open(img_path).convert("RGB")
+    except Exception as e:
+        print(f"Error opening image {img_path}: {e}")
+        error_dir = f"/data/error/"
+        if not os.path.exists(error_dir):
+            os.makedirs(error_dir)
+        os.rename(img_path, f"{error_dir}/{img_file_name}")
+        continue
     inputs = processor(images=image, text=query, return_tensors="pt").to("cuda")
 
     outputs = model.generate(
