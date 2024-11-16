@@ -139,3 +139,31 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+  # openbmb/MiniCPM-V-2_6
+  minicpm-v-2_6:
+    build:
+      context: .
+      dockerfile: openbmb/minicpm-v-2_6/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: openbmb
+        GIT_REPO: MiniCPM-V-2_6
+        GIT_BRANCH: main
+        DIR: openbmb/minicpm-v-2_6/
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    image: minicpm-v-2_6
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
