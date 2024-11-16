@@ -37,31 +37,31 @@ services:
     tty: true
 
   ovis1.6-gemma2-9b:
-      build:
-        context: .
-        dockerfile: ovis1.6-gemma2-9b/Dockerfile
-        args:
-          GIT_DOMAIN: huggingface.co
-          GIT_ORG: AIDC-AI
-          GIT_REPO: Ovis1.6-Gemma2-9B-GPTQ-Int4
-          GIT_BRANCH: main
-          DIR: ovis1.6-gemma2-9b
-      shm_size: '16gb'
-      deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                count: all
-                capabilities: [ gpu ]
-      image: ovis1.6-gemma2-9b
-      depends_on:
+    build:
+      context: .
+      dockerfile: ovis1.6-gemma2-9b/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: AIDC-AI
+        GIT_REPO: Ovis1.6-Gemma2-9B-GPTQ-Int4
+        GIT_BRANCH: main
+        DIR: ovis1.6-gemma2-9b
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: ovis1.6-gemma2-9b
+    depends_on:
       - cu124_torch25_base
-      volumes:
-        - ./data:/data
-      stdin_open: true
-      tty: true
-      
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+
   instructblip-vicuna-7b:
     build:
       context: .
@@ -87,7 +87,7 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
-    
+
   salesforce_blip2:
     build:
       context: .
@@ -107,6 +107,32 @@ services:
               count: all
               capabilities: [ gpu ]
     image: salesforce_blip2
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+  # Qwen/Qwen2-VL-7B-Instruct
+  qwen2_vl_7b_instruct:
+    build:
+      context: .
+      dockerfile: qwen/qwen2-vl/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: Qwen
+        GIT_REPO: Qwen2-VL-7B-Instruct
+        GIT_BRANCH: main
+        DIR: qwen/qwen2-vl/
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: qwen2_vl_7b_instruct
     depends_on:
       - cu124_torch25_base
     volumes:
