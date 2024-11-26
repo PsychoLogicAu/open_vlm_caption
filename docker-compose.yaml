@@ -36,6 +36,32 @@ services:
     stdin_open: true
     tty: true
 
+  internvl2-8b-mpo:
+    build:
+      context: .
+      dockerfile: internvl2-8b-mpo/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: OpenGVLab
+        GIT_REPO: InternVL2-8B-MPO
+        GIT_BRANCH: main
+        DIR: internvl2-8b-mpo
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    image: internvl2-8b-mpo
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+
   ovis1.6-gemma2-9b:
     build:
       context: .
@@ -167,3 +193,38 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+  # fancyfeast/llama-joycaption-alpha-two-hf-llava
+  joycaption-alpha-two:
+    build:
+      context: .
+      dockerfile: fancyfeast/llama-joycaption-alpha-two-hf-llava/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: fancyfeast
+        GIT_REPO: llama-joycaption-alpha-two-hf-llava
+        GIT_BRANCH: main
+        DIR: fancyfeast/llama-joycaption-alpha-two-hf-llava/
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    image: joycaption-alpha-two
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+    networks:
+      - isolated_network
+
+networks:
+    isolated_network:
+        driver: bridge
+        internal: true
