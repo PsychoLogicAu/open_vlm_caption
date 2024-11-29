@@ -223,6 +223,34 @@ services:
     tty: true
     networks:
       - isolated_network
+  # microsoft/Florence-2
+  florence-2:
+    build:
+      context: .
+      dockerfile: microsoft/florence-2/Dockerfile
+      args:
+        GIT_DOMAIN: huggingface.co
+        GIT_ORG: microsoft
+        GIT_REPO: Florence-2-large
+        GIT_BRANCH: main
+        DIR: microsoft/florence-2/
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    image: florence-2
+    depends_on:
+      - cu124_torch25_base
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
 
 networks:
     isolated_network:
