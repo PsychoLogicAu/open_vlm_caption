@@ -44,6 +44,8 @@ def main(args):
     # Initialize model
     if args.model == "minicpm-v-2_6":
         model = vlm_models.MiniCPM_V_2_6(query=query, quantize=args.quantize)
+    elif args.model.startswith("internvl2"):
+        model = vlm_models.InternVL2Model(checkpoint=args.model, query=query, quantize=args.quantize)
     else:
         raise ValueError(f"Unsupported model type: {args.model}")
     

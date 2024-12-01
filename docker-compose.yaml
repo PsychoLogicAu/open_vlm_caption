@@ -32,58 +32,6 @@ services:
     stdin_open: true
     tty: true
 
-  internvl2-8b:
-    build:
-      context: .
-      dockerfile: internvl2-8b/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: OpenGVLab
-        GIT_REPO: InternVL2-8B
-        GIT_BRANCH: main
-        DIR: internvl2-8b
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    image: internvl2-8b
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
-
-  internvl2-8b-mpo:
-    build:
-      context: .
-      dockerfile: internvl2-8b-mpo/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: OpenGVLab
-        GIT_REPO: InternVL2-8B-MPO
-        GIT_BRANCH: main
-        DIR: internvl2-8b-mpo
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    image: internvl2-8b-mpo
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
-
   ovis1.6-gemma2-9b:
     build:
       context: .

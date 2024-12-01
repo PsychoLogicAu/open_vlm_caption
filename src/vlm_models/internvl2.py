@@ -1,11 +1,11 @@
-import imghdr
-import numpy as np
-import os
-import torch
-import torchvision.transforms as T
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
 from transformers import AutoModel, AutoTokenizer, BitsAndBytesConfig
+import torch
+import torchvision.transforms as T
+
+from vlm_models.base_model import BaseVLMModel
+
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
@@ -93,75 +93,69 @@ def load_image(image_file, input_size=448, max_num=12):
     return pixel_values
 
 
-# If you want to load a model using multiple GPUs, please refer to the `Multiple GPUs` section.
-checkpoint = "OpenGVLab/InternVL2-8B-MPO"
-quantization_config = BitsAndBytesConfig(
-    load_in_8bit=True,
-    llm_int8_enable_fp32_cpu_offload=True,
-    llm_int8_skip_modules=[
-        "mlp1.0",
-        "mlp1.1",
-        "mlp1.3",
-        "vision_model.embeddings",
-        "vision_model.encoder",
-    ],
-)
-device_map = "auto"
-model = AutoModel.from_pretrained(
-    checkpoint,
-    torch_dtype=torch.float16,
-    quantization_config=quantization_config,
-    device_map=device_map,
-    low_cpu_mem_usage=True,
-    use_flash_attn=True,
-    trust_remote_code=True,
-).eval()
+class InternVL2Model(BaseVLMModel):
+    def __init__(self, query: str, quantize: bool, checkpoint: str = None):
+        checkpoint_mapping = {
+            "internvl2-8b-mpo": "OpenGVLab/InternVL2-8B-MPO",
+            "internvl2-8b": "OpenGVLab/InternVL2-8B",
+        }
+        checkpoint = checkpoint_mapping.get(checkpoint, None)
+        if checkpoint is None:
+            raise ValueError(
+                f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
+            )
+        super().__init__(checkpoint, query, quantize)  # Initialize the base class
 
-# Write the model structure to a file
-model_structure_file = f"/data/debug/{checkpoint}/model_structure.txt"
-os.makedirs(os.path.dirname(model_structure_file), exist_ok=True)
-with open(model_structure_file, "w") as file:
-    file.write(str(model))
+    def _initialize_model(self):
+        quantization_config = (
+            BitsAndBytesConfig(
+                load_in_8bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                llm_int8_skip_modules=[
+                    "mlp1.0",
+                    "mlp1.1",
+                    "mlp1.3",
+                    "vision_model.embeddings",
+                    "vision_model.encoder",
+                ],
+            )
+            if self.quantize and self.checkpoint.endswith("MPO")
+            else BitsAndBytesConfig(
+                load_in_8bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                llm_int8_skip_modules=[
+                    "vision_model.embeddings",
+                    "vision_model.encoder",
+                ],
+            ) if self.quantize
+            else None
+        )
+        device_map = "auto"
+        self.model = AutoModel.from_pretrained(
+            self.checkpoint,
+            torch_dtype=torch.float16,
+            quantization_config=quantization_config,
+            device_map=device_map,
+            low_cpu_mem_usage=True,
+            use_flash_attn=True,
+            trust_remote_code=True,
+        ).eval()
 
-tokenizer = AutoTokenizer.from_pretrained(
-    checkpoint, trust_remote_code=True, use_fast=False
-)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.checkpoint,
+            trust_remote_code=True,
+            use_fast=False,
+        )
 
-# load query string from the text file /data/query.txt
-with open("/data/query.txt", "r") as f:
-    query = f"<image>\n{f.read()}"
+    def _process_query(self, query):
+        return f"<image>\n{query}"
 
-print("Query:", query)
+    def _process_image(self, img_path):
+        max_tiles = 12
+        pixel_values = load_image(img_path, max_num=max_tiles).to(torch.float16)
+        return pixel_values
 
-# iterate over the files in "/data/images" directory, and add detected image paths to img_path_list
-img_path_list = []
-for root, dirs, files in os.walk("/data/images"):
-    for file in files:
-        file_path = os.path.join(root, file)
-        if imghdr.what(file_path) is not None:
-            img_path_list.append(file_path)
-
-output_dir = f"/data/output/{checkpoint}"
-# Create the output directory if required
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-
-for img_path in img_path_list:
-    output_path = f"{output_dir}/{img_path.split('/')[-1].split('.')[0]}.txt"
-
-    # If the output file already exists, skip the image
-    if os.path.exists(output_path):
-        continue
-
-    # set the max number of tiles in `max_num`
-    max_tiles = 12
-    pixel_values = load_image(img_path, max_num=max_tiles).to(torch.float16)
-    generation_config = dict(max_new_tokens=1024, do_sample=True)
-
-    response = model.chat(tokenizer, pixel_values, query, generation_config)
-
-    print(f"{img_path}: {response}")
-
-    # Write the response to the output file
-    with open(output_path, "w") as f:
-        f.write(response)
+    def _generate_response(self, image):
+        generation_config = dict(max_new_tokens=1024, do_sample=True)
+        response = self.model.chat(self.tokenizer, image, self.query, generation_config)
+        return response
