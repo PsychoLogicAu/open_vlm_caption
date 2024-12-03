@@ -96,8 +96,9 @@ def load_image(image_file, input_size=448, max_num=12):
 class InternVL2Model(BaseVLMModel):
     def __init__(self, query: str, quantize: bool, checkpoint: str = None):
         checkpoint_mapping = {
-            "internvl2-8b-mpo": "OpenGVLab/InternVL2-8B-MPO",
+            "internvl2": "OpenGVLab/InternVL2-8B",  # Default checkpoint
             "internvl2-8b": "OpenGVLab/InternVL2-8B",
+            "internvl2-8b-mpo": "OpenGVLab/InternVL2-8B-MPO",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:

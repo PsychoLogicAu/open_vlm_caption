@@ -48,6 +48,8 @@ def main(args):
         model = vlm_models.InternVL2Model(checkpoint=args.model, query=query, quantize=args.quantize)
     elif args.model.startswith("ovis1.6"):
         model = vlm_models.Ovis1_6Model(checkpoint=args.model, query=query, quantize=args.quantize)
+    elif args.model.startswith("instructblip"):
+        model = vlm_models.InstructBlipModel(checkpoint=args.model, query=query, quantize=args.quantize)
     else:
         raise ValueError(f"Unsupported model type: {args.model}")
     

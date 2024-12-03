@@ -11,6 +11,7 @@ class Ovis1_6Model(BaseVLMModel):
     def __init__(self, query: str, quantize: bool, checkpoint: str = None):
         # TODO: support non-quantized models, not enough VRAM to test these
         checkpoint_mapping = {
+            "ovis1.6": "AIDC-AI/Ovis1.6-Gemma2-9B-GPTQ-Int4",  # Default checkpoint
             "ovis1.6-gemma2-9b": "AIDC-AI/Ovis1.6-Gemma2-9B-GPTQ-Int4",
             "ovis1.6-llama3.2-3b": "AIDC-AI/Ovis1.6-Llama3.2-3B-GPTQ-Int4",
         }
