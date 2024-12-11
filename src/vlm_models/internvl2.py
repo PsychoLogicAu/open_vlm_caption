@@ -99,6 +99,7 @@ class InternVL2Model(BaseVLMModel):
             "internvl2": "OpenGVLab/InternVL2-8B",  # Default checkpoint
             "internvl2-8b": "OpenGVLab/InternVL2-8B",
             "internvl2-8b-mpo": "OpenGVLab/InternVL2-8B-MPO",
+            "internvl2_5-8b": "OpenGVLab/InternVL2_5-8B",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
@@ -120,15 +121,7 @@ class InternVL2Model(BaseVLMModel):
                     "vision_model.encoder",
                 ],
             )
-            if self.quantize and self.checkpoint.endswith("MPO")
-            else BitsAndBytesConfig(
-                load_in_8bit=True,
-                llm_int8_enable_fp32_cpu_offload=True,
-                llm_int8_skip_modules=[
-                    "vision_model.embeddings",
-                    "vision_model.encoder",
-                ],
-            ) if self.quantize
+            if self.quantize
             else None
         )
         device_map = "auto"

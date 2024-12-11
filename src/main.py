@@ -58,6 +58,12 @@ def main(args):
     create_output_dir(output_dir)
 
     for img_path in img_paths:
+        output_path = os.path.join(output_dir, os.path.splitext(os.path.basename(img_path))[0] + ".txt")
+
+        if os.path.exists(output_path):
+            logging.info(f"Skipping {img_path}, output already exists")
+            continue
+
         try:
             response = model.caption_image(img_path)
         except Exception as e:
@@ -65,7 +71,7 @@ def main(args):
             continue
 
         logging.info(f"Processed {img_path}: {response}")
-        output_path = os.path.join(output_dir, os.path.basename(img_path) + ".txt")
+        
         with open(output_path, "w") as f:
             f.write(response)
 
