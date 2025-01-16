@@ -10,16 +10,10 @@ services:
         USERNAME: $USER
     image: cu124_torch25_base:latest
 
-  internvl2-8b:
+  vlm-caption:
     build:
       context: .
-      dockerfile: internvl2-8b/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: OpenGVLab
-        GIT_REPO: InternVL2-8B
-        GIT_BRANCH: main
-        DIR: internvl2-8b
+      dockerfile: Dockerfile
     shm_size: '16gb'
     deploy:
       resources:
@@ -28,91 +22,17 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
-    image: internvl2-8b
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    image: vlm-caption
     depends_on:
       - cu124_torch25_base
     volumes:
       - ./data:/data
     stdin_open: true
     tty: true
-
-  internvl2-8b-mpo:
-    build:
-      context: .
-      dockerfile: internvl2-8b-mpo/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: OpenGVLab
-        GIT_REPO: InternVL2-8B-MPO
-        GIT_BRANCH: main
-        DIR: internvl2-8b-mpo
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    image: internvl2-8b-mpo
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
-
-  ovis1.6-gemma2-9b:
-    build:
-      context: .
-      dockerfile: ovis1.6-gemma2-9b/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: AIDC-AI
-        GIT_REPO: Ovis1.6-Gemma2-9B-GPTQ-Int4
-        GIT_BRANCH: main
-        DIR: ovis1.6-gemma2-9b
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    image: ovis1.6-gemma2-9b
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
-
-  instructblip-vicuna-7b:
-    build:
-      context: .
-      dockerfile: instructblip-vicuna-7b/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: Salesforce
-        GIT_REPO: instructblip-vicuna-7b
-        GIT_BRANCH: main
-        DIR: instructblip-vicuna-7b
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    image: instructblip-vicuna-7b
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
+    # networks:
+    #   - isolated_network
 
   salesforce_blip2:
     build:
@@ -165,34 +85,7 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
-  # openbmb/MiniCPM-V-2_6
-  minicpm-v-2_6:
-    build:
-      context: .
-      dockerfile: openbmb/minicpm-v-2_6/Dockerfile
-      args:
-        GIT_DOMAIN: huggingface.co
-        GIT_ORG: openbmb
-        GIT_REPO: MiniCPM-V-2_6
-        GIT_BRANCH: main
-        DIR: openbmb/minicpm-v-2_6/
-    shm_size: '16gb'
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
-    environment:
-      - HF_TOKEN=${HF_TOKEN}
-    image: minicpm-v-2_6
-    depends_on:
-      - cu124_torch25_base
-    volumes:
-      - ./data:/data
-    stdin_open: true
-    tty: true
+
   # fancyfeast/llama-joycaption-alpha-two-hf-llava
   joycaption-alpha-two:
     build:
