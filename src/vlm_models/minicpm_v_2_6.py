@@ -5,9 +5,16 @@ from vlm_models.base_model import BaseVLMModel
 
 
 class MiniCPM_V_2_6(BaseVLMModel):
-    def __init__(self, query: str, quantize: bool, checkpoint: str = None):
-        checkpoint = checkpoint or "openbmb/MiniCPM-V-2_6"
-        super().__init__(checkpoint, query, quantize)  # Initialize the base class
+    def __init__(
+        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None
+    ):
+        checkpoint_mapping = {
+            "minicpm-v-2_6": "openbmb/MiniCPM-V-2_6",
+        }
+        checkpoint = checkpoint_mapping.get(checkpoint, "openbmb/MiniCPM-V-2_6")
+        super().__init__(
+            checkpoint, system_prompt, prompt, quantize
+        )  # Initialize the base class
 
     def _initialize_model(self):
         quantization_config = (
@@ -33,10 +40,10 @@ class MiniCPM_V_2_6(BaseVLMModel):
             trust_remote_code=True,
         )
 
-    def _process_query(self, query):
-        return query
+    def _process_query(self, system_prompt, prompt):
+        return f"{system_prompt}\n{prompt}"
 
-    def _process_image(self, img_path):
+    def _preprocess_image(self, img_path):
         image = Image.open(img_path).convert("RGB")
         return image
 

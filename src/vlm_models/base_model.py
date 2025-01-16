@@ -4,12 +4,13 @@ import logging
 
 
 class BaseVLMModel(ABC):
-    def __init__(self, checkpoint: str, query: str, quantize: bool):
+    def __init__(self, checkpoint: str, system_prompt: str, prompt: str, quantize: bool):
         self.checkpoint = checkpoint
-        self.query = self._process_query(query)
+        self.query = self._process_query(system_prompt, prompt)
         self.quantize = quantize
         self.model = None
         self.tokenizer = None
+        self.supports_batch = False
         self._initialize_model()
 
         if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
@@ -21,12 +22,12 @@ class BaseVLMModel(ABC):
         pass
 
     @abstractmethod
-    def _process_query(self, query):
+    def _process_query(self, system_prompt, prompt):
         """Process the query as required by the model."""
         pass
 
     @abstractmethod
-    def _process_image(self, img_path):
+    def _preprocess_image(self, img_path):
         """Load and process the image as required by the model."""
         pass
 
@@ -44,5 +45,12 @@ class BaseVLMModel(ABC):
         if imghdr.what(img_path) is None:
             raise ValueError(f"Invalid image: {img_path}")
 
-        image = self._process_image(img_path)
+        image = self._preprocess_image(img_path)
         return self._generate_response(image)
+
+    def batch_caption_images(self, img_paths):
+        if self.supports_batch:
+            return self._generate_batch_response(img_paths)
+        else:
+            raise ValueError("Batch processing not supported by this model")
+            

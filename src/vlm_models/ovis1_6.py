@@ -8,7 +8,9 @@ from vlm_models.base_model import BaseVLMModel
 
 
 class Ovis1_6Model(BaseVLMModel):
-    def __init__(self, query: str, quantize: bool, checkpoint: str = None):
+    def __init__(
+        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None
+    ):
         # TODO: support non-quantized models, not enough VRAM to test these
         checkpoint_mapping = {
             "ovis1.6": "AIDC-AI/Ovis1.6-Gemma2-9B-GPTQ-Int4",  # Default checkpoint
@@ -20,7 +22,9 @@ class Ovis1_6Model(BaseVLMModel):
             raise ValueError(
                 f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
             )
-        super().__init__(checkpoint, query, quantize)  # Initialize the base class
+        super().__init__(
+            checkpoint, system_prompt, prompt, quantize
+        )  # Initialize the base class
 
     def _initialize_model(self):
         self.model = OvisGemma2GPTQForCausalLM.from_quantized(
@@ -36,10 +40,11 @@ class Ovis1_6Model(BaseVLMModel):
         self.text_tokenizer = self.model.get_text_tokenizer()
         self.visual_tokenizer = self.model.get_visual_tokenizer()
 
-    def _process_query(self, query):
+    def _process_query(self, system_prompt, prompt):
+        query = f"{system_prompt}\n{prompt}"
         return f"<image>\n{query}"
 
-    def _process_image(self, img_path):
+    def _preprocess_image(self, img_path):
         image = Image.open(img_path).convert("RGB")
         return image
 

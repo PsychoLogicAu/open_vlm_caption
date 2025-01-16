@@ -10,6 +10,11 @@ RUN export MAKEFLAGS="-j$(nproc)" && \
     cd AutoGPTQ && \
     /opt/conda/bin/conda run -n conda pip install -vvv --no-build-isolation -e .
 
+RUN export MAKEFLAGS="-j$(nproc)" && \
+    git clone https://github.com/WePOINTS/WePOINTS.git && \
+    cd WePOINTS && \
+    /opt/conda/bin/conda run -n conda pip install -vvv -e .
+
 COPY src/ /app/
 RUN chmod +x /app/main.py
 

@@ -94,19 +94,27 @@ def load_image(image_file, input_size=448, max_num=12):
 
 
 class InternVL2Model(BaseVLMModel):
-    def __init__(self, query: str, quantize: bool, checkpoint: str = None):
+    def __init__(
+        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None
+    ):
         checkpoint_mapping = {
-            "internvl2": "OpenGVLab/InternVL2-8B",  # Default checkpoint
+            "internvl2": "OpenGVLab/InternVL2_5-8B-MPO",  # Default checkpoint
             "internvl2-8b": "OpenGVLab/InternVL2-8B",
             "internvl2-8b-mpo": "OpenGVLab/InternVL2-8B-MPO",
+            "internvl2_5-4b-mpo": "OpenGVLab/InternVL2_5-4B-MPO",
             "internvl2_5-8b": "OpenGVLab/InternVL2_5-8B",
+            "internvl2_5-8b-mpo": "OpenGVLab/InternVL2_5-8B-MPO",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
             raise ValueError(
                 f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
             )
-        super().__init__(checkpoint, query, quantize)  # Initialize the base class
+        super().__init__(
+            checkpoint, system_prompt, prompt, quantize
+        )  # Initialize the base class
+        print(f"using query: {self.query}")
+        self.supports_batch = True
 
     def _initialize_model(self):
         quantization_config = (
@@ -141,11 +149,12 @@ class InternVL2Model(BaseVLMModel):
             use_fast=False,
         )
 
-    def _process_query(self, query):
+    def _process_query(self, system_prompt, prompt):
+        query = f"{system_prompt}\n{prompt}"
         return f"<image>\n{query}"
 
-    def _process_image(self, img_path):
-        max_tiles = 12
+    def _preprocess_image(self, img_path):
+        max_tiles = 6  # 12 causing OOM
         pixel_values = load_image(img_path, max_num=max_tiles).to(torch.float16)
         return pixel_values
 
@@ -153,3 +162,24 @@ class InternVL2Model(BaseVLMModel):
         generation_config = dict(max_new_tokens=1024, do_sample=True)
         response = self.model.chat(self.tokenizer, image, self.query, generation_config)
         return response
+
+    def _generate_batch_response(self, img_paths):
+        with torch.autocast("cuda"):
+            max_tiles = 6
+            pixel_values_list = [
+                load_image(img_path, max_num=max_tiles) for img_path in img_paths
+            ]
+            num_patches_list = [
+                pixel_values.size(0) for pixel_values in pixel_values_list
+            ]
+            pixel_values = torch.cat(pixel_values_list, dim=0)
+            questions = [self.query] * len(num_patches_list)
+            generation_config = dict(max_new_tokens=1024, do_sample=True)
+            responses = self.model.batch_chat(
+                self.tokenizer,
+                pixel_values,
+                num_patches_list=num_patches_list,
+                questions=questions,
+                generation_config=generation_config,
+            )
+            return responses

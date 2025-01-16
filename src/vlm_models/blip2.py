@@ -1,21 +1,22 @@
 from PIL import Image
 from transformers import (
-    InstructBlipProcessor,
-    InstructBlipForConditionalGeneration,
+    Blip2Processor,
+    Blip2ForConditionalGeneration,
     BitsAndBytesConfig,
 )
 
 from vlm_models.base_model import BaseVLMModel
 
 
-class InstructBlipModel(BaseVLMModel):
+class Blip2Model(BaseVLMModel):
     def __init__(self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None):
         checkpoint_mapping = {
-            "instructblip": "Salesforce/instructblip-vicuna-7b", # Default checkpoint
-            "instructblip-vicuna-7b": "Salesforce/instructblip-vicuna-7b",
-            "instructblip-vicuna-13b": "Salesforce/instructblip-vicuna-13b",
-            "instructblip-flan-t5-xl": "Salesforce/instructblip-flan-t5-xl",
-            "instructblip-flan-t5-xxl": "Salesforce/instructblip-flan-t5-xxl",
+            "blip2": "Salesforce/blip2-flan-t5-xl", # Default checkpoint
+            "blip2-opt-6.7b-coco": "Salesforce/blip2-opt-6.7b-coco",
+            "blip2-opt-2.7b": "Salesforce/blip2-opt-2.7b",
+            "blip2-opt-6.7b": "Salesforce/blip2-opt-6.7b",
+            "blip2-flan-t5-xl": "Salesforce/blip2-flan-t5-xl",
+            "blip2-flan-t5-xxl": "Salesforce/blip2-flan-t5-xxl",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
@@ -31,16 +32,15 @@ class InstructBlipModel(BaseVLMModel):
             llm_int8_skip_modules=[
                 "vision_model",
                 "qformer",
-                "query_tokens",
                 "language_projection",
             ],
         ) if self.quantize else None
-        self.model = InstructBlipForConditionalGeneration.from_pretrained(
+        self.model = Blip2ForConditionalGeneration.from_pretrained(
             self.checkpoint,
             quantization_config=quantization_config,
             device_map="auto",
         ).eval()
-        self.processor = InstructBlipProcessor.from_pretrained(self.checkpoint)
+        self.processor = Blip2Processor.from_pretrained(self.checkpoint)
 
     def _process_query(self, system_prompt, prompt):
         return f"{system_prompt}\n{prompt}"
@@ -50,10 +50,10 @@ class InstructBlipModel(BaseVLMModel):
         return image
 
     def _generate_response(self, image):
-        inputs = self.processor(images=image, text=self.query, return_tensors="pt").to(
+        inputs = self.processor(image, self.query, return_tensors="pt").to(
             "cuda"
         )
-        outputs = self.model.generate(
+        out = self.model.generate(
             **inputs,
             do_sample=False,
             num_beams=5,
@@ -64,4 +64,4 @@ class InstructBlipModel(BaseVLMModel):
             length_penalty=1.0,
             temperature=1,
         )
-        return self.processor.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+        return self.processor.decode(out[0], skip_special_tokens=True)[0].strip()

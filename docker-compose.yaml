@@ -31,6 +31,8 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+    # networks:
+    #   - isolated_network
 
   salesforce_blip2:
     build:
