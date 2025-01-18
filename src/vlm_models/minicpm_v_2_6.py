@@ -10,6 +10,7 @@ class MiniCPM_V_2_6(BaseVLMModel):
     ):
         checkpoint_mapping = {
             "minicpm-v-2_6": "openbmb/MiniCPM-V-2_6",
+            "minicpm-o-2_6": "openbmb/MiniCPM-o-2_6",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, "openbmb/MiniCPM-V-2_6")
         super().__init__(
@@ -21,10 +22,23 @@ class MiniCPM_V_2_6(BaseVLMModel):
             BitsAndBytesConfig(
                 load_in_8bit=True,
                 llm_int8_enable_fp32_cpu_offload=True,
-                llm_int8_skip_modules=[
-                    "vpm",
-                    "resampler",
-                ],
+                llm_int8_skip_modules=(
+                    [
+                        "vpm",
+                        "resampler",
+                    ]
+                    if self.checkpoint == "openbmb/MiniCPM-V-2_6"
+                    else (
+                        [
+                            "apm",
+                            "resampler",
+                            "tts",
+                            "vpm",
+                        ]
+                        if self.checkpoint == "openbmb/MiniCPM-o-2_6"
+                        else []
+                    )
+                ),
             )
             if self.quantize
             else None

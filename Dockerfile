@@ -15,6 +15,10 @@ RUN export MAKEFLAGS="-j$(nproc)" && \
     cd WePOINTS && \
     /opt/conda/bin/conda run -n conda pip install -vvv -e .
 
+ADD requirements.txt /tmp/requirements.txt
+RUN export MAKEFLAGS="-j$(nproc)" && \
+    /opt/conda/bin/conda run -n conda pip install --no-cache-dir -r /tmp/requirements.txt
+
 COPY src/ /app/
 RUN chmod +x /app/main.py
 

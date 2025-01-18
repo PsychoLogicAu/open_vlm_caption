@@ -1,0 +1,3 @@
+librosa # Added for minicpm-o-2_6
+vector_quantize_pytorch # Added for minicpm-o-2_6
+vocos # Added for minicpm-o-2_6
