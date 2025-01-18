@@ -48,7 +48,7 @@ def main(args):
         huggingface_hub.login(token=os.environ["HF_TOKEN"])
 
     # Initialize model
-    if args.model == "minicpm-v-2_6":
+    if args.model in ["minicpm-v-2_6", "minicpm-o-2_6"]:
         model = vlm_models.MiniCPM_V_2_6(
             checkpoint=args.model,
             system_prompt=system_prompt,
