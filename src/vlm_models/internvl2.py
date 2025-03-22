@@ -155,7 +155,7 @@ class InternVL2Model(BaseVLMModel):
 
     def _preprocess_image(self, img_path):
         max_tiles = 6  # 12 causing OOM
-        pixel_values = load_image(img_path, max_num=max_tiles).to(torch.float16)
+        pixel_values = load_image(img_path, max_num=max_tiles).to(torch.float16).cuda()
         return pixel_values
 
     def _generate_response(self, image):

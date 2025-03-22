@@ -5,8 +5,7 @@ from .internvl2 import InternVL2Model
 from .joycaption import JoyCaptionModel
 from .minicpm_v_2_6 import MiniCPM_V_2_6
 from .ovis1_6 import Ovis1_6Model
-from .paligemma2 import PaliGemma2Model
-from .wepoints import WePOINTSModel
+from .ovis2 import Ovis2Model
 
 __all__ = [
     "BaseVLMModel",
@@ -16,6 +15,5 @@ __all__ = [
     "JoyCaptionModel",
     "MiniCPM_V_2_6",
     "Ovis1_6Model",
-    "PaliGemma2Model",
-    "WePOINTSModel",
+    "Ovis2Model",
 ]

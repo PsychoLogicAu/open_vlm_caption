@@ -48,22 +48,17 @@ def main(args):
         huggingface_hub.login(token=os.environ["HF_TOKEN"])
 
     # Initialize model
-    if args.model in ["minicpm-v-2_6", "minicpm-o-2_6"]:
-        model = vlm_models.MiniCPM_V_2_6(
+    if args.model.startswith("blip2"):
+        model = vlm_models.Blip2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=query,
             quantize=args.quantize,
         )
-    elif args.model.startswith("internvl2"):
-        model = vlm_models.InternVL2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=query,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("ovis1.6"):
-        model = vlm_models.Ovis1_6Model(
+    elif args.model.startswith("deepseek-vl2"):
+        from vlm_models import deepseekvl2
+
+        model = deepseekvl2.DeepSeekVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=query,
@@ -76,22 +71,8 @@ def main(args):
             prompt=query,
             quantize=args.quantize,
         )
-    elif args.model.startswith("blip2"):
-        model = vlm_models.Blip2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=query,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("paligemma2"):
-        model = vlm_models.PaliGemma2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=query,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("wepoints"):
-        model = vlm_models.WePOINTSModel(
+    elif args.model.startswith("internvl2"):
+        model = vlm_models.InternVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=query,
@@ -99,6 +80,45 @@ def main(args):
         )
     elif args.model.startswith("joycaption"):
         model = vlm_models.JoyCaptionModel(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("minicpm"):
+        model = vlm_models.MiniCPM_V_2_6(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("ovis1.6"):
+        model = vlm_models.Ovis1_6Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("ovis2"):
+        model = vlm_models.Ovis2Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("paligemma2"):
+        from vlm_models import pali_gemma2
+
+        model = pali_gemma2.PaliGemma2Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("wepoints"):
+        from vlm_models import wepoints
+
+        model = wepoints.WePOINTSModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=query,

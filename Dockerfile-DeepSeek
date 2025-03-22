@@ -1,0 +1,20 @@
+FROM vlm-caption
+
+RUN export MAKEFLAGS="-j$(nproc)" && \
+    git clone https://github.com/deepseek-ai/DeepSeek-VL2 && \
+    cd DeepSeek-VL2 && \
+    /opt/conda/bin/conda run -n conda pip install -vvv -e .
+    # rm requirements.txt && \
+
+RUN export MAKEFLAGS="-j$(nproc)" && \
+    /opt/conda/bin/conda run -n conda pip install --no-cache-dir -v \
+    peft==0.10.0 xformers
+
+# TODO: Move to base image
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+RUN dpkg -i cuda-keyring_1.1-1_all.deb
+RUN apt-get update
+# RUN apt install libnccl2=2.24.3-1+cuda12.4 libnccl-dev=2.24.3-1+cuda12.4 --allow-change-held-packages -y
+RUN apt install libnccl2 libnccl-dev --allow-change-held-packages -y
+
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libnccl.so.2.25.1
