@@ -34,6 +34,30 @@ services:
     # networks:
     #   - isolated_network
 
+  vlm-caption-deepseek:
+    build:
+      context: .
+      dockerfile: Dockerfile-DeepSeek
+    shm_size: '16gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    image: vlm-caption-deepseek
+    depends_on:
+      - vlm-caption
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+    # networks:
+    #   - isolated_network
+
   salesforce_blip2:
     build:
       context: .

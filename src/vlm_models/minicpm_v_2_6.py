@@ -11,8 +11,13 @@ class MiniCPM_V_2_6(BaseVLMModel):
         checkpoint_mapping = {
             "minicpm-v-2_6": "openbmb/MiniCPM-V-2_6",
             "minicpm-o-2_6": "openbmb/MiniCPM-o-2_6",
+            "minicpm-llama3-v-2_5": "openbmb/MiniCPM-Llama3-V-2_5",
         }
-        checkpoint = checkpoint_mapping.get(checkpoint, "openbmb/MiniCPM-V-2_6")
+        checkpoint = checkpoint_mapping.get(checkpoint, None)
+        if checkpoint is None:
+            raise ValueError(
+                f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
+            )
         super().__init__(
             checkpoint, system_prompt, prompt, quantize
         )  # Initialize the base class
