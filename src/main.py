@@ -29,8 +29,8 @@ def create_output_dir(output_dir):
 def main(args):
     logging.basicConfig(level=logging.INFO)
 
-    system_prompt_path = "/data/system_prompt.txt"
-    query_path = "/data/query.txt"
+    system_prompt_path = f"/data/{args.system_prompt}"
+    query_path = f"/data/{args.user_prompt}"
     image_dir = "/data/images/"
 
     # Process images
@@ -41,7 +41,8 @@ def main(args):
         system_prompt = f.read()
     with open(query_path, "r") as f:
         query = f.read()
-    logging.info(f"Query: {query}")
+    logging.info(f"System prompt: {system_prompt}")
+    logging.info(f"User prompt: {query}")
 
     if "HF_TOKEN" in os.environ and os.environ["HF_TOKEN"]:
         logging.info("Logging in to the Hugging Face Hub")
@@ -78,6 +79,13 @@ def main(args):
             prompt=query,
             quantize=args.quantize,
         )
+    elif args.model.startswith("internvl3"):
+        model = vlm_models.InternVL3Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
     elif args.model.startswith("joycaption"):
         model = vlm_models.JoyCaptionModel(
             checkpoint=args.model,
@@ -93,6 +101,8 @@ def main(args):
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis1.6"):
+        from vlm_models import Ovis1_6Model
+        
         model = vlm_models.Ovis1_6Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
@@ -110,6 +120,13 @@ def main(args):
         from vlm_models import pali_gemma2
 
         model = pali_gemma2.PaliGemma2Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=query,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("phi"):
+        model = vlm_models.PhiModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=query,
@@ -189,11 +206,18 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--model", type=str, default="minicpm-v-2_6", help="Model type to use"
+        "--model", type=str, default="internvl3", help="Model type to use"
     )
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument(
         "--quantize", action="store_true", help="Quantize the model when loading"
+    )
+    # Note: paths relative to data/
+    parser.add_argument(
+        "--system_prompt", type=str, default="system_prompt.txt", help="System prompt"
+    )
+    parser.add_argument(
+        "--user_prompt", type=str, default="query.txt", help="User prompt"
     )
     return parser.parse_args()
 
