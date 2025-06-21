@@ -10,6 +10,18 @@ services:
         USERNAME: $USER
     image: cu124_torch25_base:latest
 
+  cu128_torch27_base:
+    build:
+      context: .
+      dockerfile: cu128_torch27_base/Dockerfile
+      args:
+        # pass through env vars to docker build
+        DOCKER_USER: $DOCKER_USER
+        HF_TOKEN: $HF_TOKEN
+        USERNAME: $USER
+    image: cu128_torch27_base:latest
+
+
   vlm-caption:
     build:
       context: .
@@ -26,7 +38,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     image: vlm-caption
     depends_on:
-      - cu124_torch25_base
+      - cu128_torch27_base
     volumes:
       - ./data:/data
     stdin_open: true

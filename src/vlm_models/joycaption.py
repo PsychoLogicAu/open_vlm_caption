@@ -18,7 +18,8 @@ class JoyCaptionModel(BaseVLMModel):
         checkpoint: str = None,
     ):
         checkpoint_mapping = {
-            "joycaption": "fancyfeast/llama-joycaption-alpha-two-hf-llava",
+            "joycaption": "fancyfeast/llama-joycaption-beta-one-hf-llava",
+            "joycaption-beta-one": "fancyfeast/llama-joycaption-beta-one-hf-llava",
             "joycaption-alpha-two": "fancyfeast/llama-joycaption-alpha-two-hf-llava",
             "llama-joycaption-alpha-two-hf-llava": "fancyfeast/llama-joycaption-alpha-two-hf-llava",
         }
@@ -37,8 +38,8 @@ class JoyCaptionModel(BaseVLMModel):
                 load_in_8bit=True,
                 llm_int8_enable_fp32_cpu_offload=True,
                 llm_int8_skip_modules=[
-                    # "vpm",
-                    # "resampler",
+                    "multi_modal_projector",
+                    "vision_tower",
                 ],
             )
             if self.quantize
@@ -93,7 +94,7 @@ class JoyCaptionModel(BaseVLMModel):
                 # Generate the captions
                 generate_ids = self.model.generate(
                     **inputs,
-                    max_new_tokens=300,
+                    max_new_tokens=512,
                     do_sample=True,
                     suppress_tokens=None,
                     use_cache=True,
