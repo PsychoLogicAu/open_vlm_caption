@@ -30,7 +30,7 @@ def main(args):
     logging.basicConfig(level=logging.INFO)
 
     system_prompt_path = f"/data/{args.system_prompt}"
-    query_path = f"/data/{args.user_prompt}"
+    user_prompt_path = f"/data/{args.user_prompt}"
     image_dir = "/data/images/"
 
     # Process images
@@ -39,10 +39,15 @@ def main(args):
     # Load prompts
     with open(system_prompt_path, "r") as f:
         system_prompt = f.read()
-    with open(query_path, "r") as f:
-        query = f.read()
+
+    with open(user_prompt_path, "r") as f:
+        user_prompt = f.read()
+
+    if args.subject_name:
+        user_prompt = f"{user_prompt}\nRefer to the subject by their name: \"{args.subject_name}\""
+
     logging.info(f"System prompt: {system_prompt}")
-    logging.info(f"User prompt: {query}")
+    logging.info(f"User prompt: {user_prompt}")
 
     if "HF_TOKEN" in os.environ and os.environ["HF_TOKEN"]:
         logging.info("Logging in to the Hugging Face Hub")
@@ -53,7 +58,7 @@ def main(args):
         model = vlm_models.Blip2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("deepseek-vl2"):
@@ -62,42 +67,42 @@ def main(args):
         model = deepseekvl2.DeepSeekVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("instructblip"):
         model = vlm_models.InstructBlipModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("internvl2"):
         model = vlm_models.InternVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("internvl3"):
         model = vlm_models.InternVL3Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("joycaption"):
         model = vlm_models.JoyCaptionModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("minicpm"):
         model = vlm_models.MiniCPM_V_2_6(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis1.6"):
@@ -106,14 +111,14 @@ def main(args):
         model = vlm_models.Ovis1_6Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis2"):
         model = vlm_models.Ovis2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("paligemma2"):
@@ -122,14 +127,21 @@ def main(args):
         model = pali_gemma2.PaliGemma2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("phi"):
         model = vlm_models.PhiModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("revisual-r1"):
+        model = vlm_models.RevisualR1Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("wepoints"):
@@ -138,7 +150,7 @@ def main(args):
         model = wepoints.WePOINTSModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     else:
@@ -150,7 +162,9 @@ def main(args):
 
     batch = []
     batch_output_paths = []
+    i = 0
     for img_path in img_paths:
+        i = i + 1
         output_path = os.path.join(
             output_dir, os.path.splitext(os.path.basename(img_path))[0] + ".txt"
         )
@@ -188,13 +202,14 @@ def main(args):
 
         end_time = datetime.now()
         execution_time = end_time - start_time
+        progress = (100 * i / float(len(img_paths)))
         if args.batch_size > 1:
             logging.info(
-                f"Processed batch in {execution_time.total_seconds()}s: {batch}"
+                f"[{progress}%] Processed batch in {execution_time.total_seconds()}s: {batch}"
             )
         else:
             logging.info(
-                f"Processed image in {execution_time.total_seconds()}s: {img_path}"
+                f"[{progress}%] Processed image in {execution_time.total_seconds()}s: {img_path}"
             )
 
         batch = []
@@ -218,6 +233,9 @@ def parse_args():
     )
     parser.add_argument(
         "--user_prompt", type=str, default="query.txt", help="User prompt"
+    )
+    parser.add_argument(
+        "--subject_name", type=str, default="", help="Subject name"
     )
     return parser.parse_args()
 
