@@ -29,8 +29,13 @@ def create_output_dir(output_dir):
 def main(args):
     logging.basicConfig(level=logging.INFO)
 
+<<<<<<< Updated upstream
     system_prompt_path = "/data/system_prompt.txt"
     query_path = "/data/query.txt"
+=======
+    system_prompt_path = f"/data/{args.system_prompt}"
+    user_prompt_path = f"/data/{args.user_prompt}"
+>>>>>>> Stashed changes
     image_dir = "/data/images/"
 
     # Process images
@@ -39,9 +44,18 @@ def main(args):
     # Load prompts
     with open(system_prompt_path, "r") as f:
         system_prompt = f.read()
+<<<<<<< Updated upstream
     with open(query_path, "r") as f:
         query = f.read()
     logging.info(f"Query: {query}")
+=======
+    with open(user_prompt_path, "r") as f:
+        user_prompt = f.read()
+    if args.subject_name:
+        user_prompt = f"{user_prompt}\nRefer to the subject by their name: \"{args.subject_name}\""
+    logging.info(f"System prompt: {system_prompt}")
+    logging.info(f"User prompt: {user_prompt}")
+>>>>>>> Stashed changes
 
     if "HF_TOKEN" in os.environ and os.environ["HF_TOKEN"]:
         logging.info("Logging in to the Hugging Face Hub")
@@ -52,7 +66,7 @@ def main(args):
         model = vlm_models.Blip2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("deepseek-vl2"):
@@ -61,49 +75,59 @@ def main(args):
         model = deepseekvl2.DeepSeekVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("instructblip"):
         model = vlm_models.InstructBlipModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("internvl2"):
         model = vlm_models.InternVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
+<<<<<<< Updated upstream
+=======
+    elif args.model.startswith("internvl3"):
+        model = vlm_models.InternVL3Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+>>>>>>> Stashed changes
     elif args.model.startswith("joycaption"):
         model = vlm_models.JoyCaptionModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("minicpm"):
         model = vlm_models.MiniCPM_V_2_6(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis1.6"):
         model = vlm_models.Ovis1_6Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis2"):
         model = vlm_models.Ovis2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("paligemma2"):
@@ -112,16 +136,33 @@ def main(args):
         model = pali_gemma2.PaliGemma2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
+<<<<<<< Updated upstream
+=======
+    elif args.model.startswith("phi"):
+        model = vlm_models.PhiModel(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("revisual-r1"):
+        model = vlm_models.RevisualR1Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+>>>>>>> Stashed changes
     elif args.model.startswith("wepoints"):
         from vlm_models import wepoints
 
         model = wepoints.WePOINTSModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     else:
@@ -133,7 +174,9 @@ def main(args):
 
     batch = []
     batch_output_paths = []
+    i = 0
     for img_path in img_paths:
+        i = i + 1
         output_path = os.path.join(
             output_dir, os.path.splitext(os.path.basename(img_path))[0] + ".txt"
         )
@@ -171,13 +214,14 @@ def main(args):
 
         end_time = datetime.now()
         execution_time = end_time - start_time
+        progress = (100 * i / float(len(img_paths)))
         if args.batch_size > 1:
             logging.info(
-                f"Processed batch in {execution_time.total_seconds()}s: {batch}"
+                f"[{progress}%] Processed batch in {execution_time.total_seconds()}s: {batch}"
             )
         else:
             logging.info(
-                f"Processed image in {execution_time.total_seconds()}s: {img_path}"
+                f"[{progress}%] Processed image in {execution_time.total_seconds()}s: {img_path}"
             )
 
         batch = []
@@ -195,6 +239,19 @@ def parse_args():
     parser.add_argument(
         "--quantize", action="store_true", help="Quantize the model when loading"
     )
+<<<<<<< Updated upstream
+=======
+    # Note: paths relative to data/
+    parser.add_argument(
+        "--system_prompt", type=str, default="system_prompt.txt", help="System prompt"
+    )
+    parser.add_argument(
+        "--user_prompt", type=str, default="query.txt", help="User prompt"
+    )
+    parser.add_argument(
+        "--subject_name", type=str, default="", help="Subject name"
+    )
+>>>>>>> Stashed changes
     return parser.parse_args()
 
 
