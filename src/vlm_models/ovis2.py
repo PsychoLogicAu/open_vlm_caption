@@ -1,5 +1,7 @@
 from PIL import Image
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, GenerationConfig
+from gptqmodel import GPTQModel
+
 import torch
 
 from vlm_models.base_model import BaseVLMModel
@@ -11,6 +13,7 @@ class Ovis2Model(BaseVLMModel):
     ):
         checkpoint_mapping = {
             "ovis2-8b": "AIDC-AI/Ovis2-8B",
+            "ovis2-34b": "AIDC-AI/Ovis2-34B-GPTQ-Int4",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
@@ -22,6 +25,7 @@ class Ovis2Model(BaseVLMModel):
         )  # Initialize the base class
 
     def _initialize_model(self):
+        is_gptq = "gptq" in self.checkpoint.lower()
         quantization_config = (
             BitsAndBytesConfig(
                 load_in_8bit=True,
@@ -31,16 +35,28 @@ class Ovis2Model(BaseVLMModel):
                     "vte",
                 ],
             )
-            if self.quantize
+            if self.quantize and not is_gptq
             else None
         )
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.checkpoint,
-            quantization_config=quantization_config,
-            multimodal_max_length=32768,
-            device_map="auto",
-            trust_remote_code=True,
-        ).eval()
+        device = "cuda"
+        if is_gptq:
+            self.model = GPTQModel.load(
+                self.checkpoint,
+                device=device,
+                trust_remote_code=True,
+            )
+            self.model.model.generation_config = GenerationConfig.from_pretrained(
+                self.checkpoint
+            )
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.checkpoint,
+                quantization_config=quantization_config,
+                multimodal_max_length=32768,
+                device_map="auto",
+                trust_remote_code=True,
+            ).eval()
+            
         self.text_tokenizer = self.model.get_text_tokenizer()
         self.visual_tokenizer = self.model.get_visual_tokenizer()
 

@@ -1,0 +1,15 @@
+Describe the image in paragraph-form natural language.
+
+Begin with the type of image and medium (e.g. photograph, oil painting). Then describe the main subject{subject_name_clause}, including age category (e.g. child, teen, adult, middle-aged, elderly) and an estimated numerical age, sex, body type, hair color and style, and facial features. Use gender specific pronouns where applicable.
+
+Include how much of the subject’s body is visible, using standard framing terms such as 'headshot', 'bust', 'waist-up', 'three-quarter body', or 'full body' etc. Also state the viewpoint (e.g. frontal, profile, three-quarter view, eye-level, shot from above, or shot from below). Integrate this detail naturally into the subject description.
+
+Describe all visible clothing and accessories with color, texture, and style. Be specific and include full outfits if visible.
+
+Describe in detail any interaction between multiple subjects in the scene. Only include this if multiple subjects are present, otherwise omit this entirely.
+
+Include the subject's pose, gestures, and body orientation{subject_name_pose_clause}. Continue with the setting, background, and lighting.
+
+Use short, clear sentences. Do not use lists, bullets, or formatting. Everything must be written in flowing prose.
+
+If a content hint is provided, use it to disambiguate uncertain or unclear details in the image. Treat the hint as guidance for what to look for and focus on, but do not invent details not visible. If the hinted content is not present, omit it entirely.

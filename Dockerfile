@@ -1,8 +1,12 @@
 FROM cu128_torch27_base:latest AS base
 
-ARG JOBS=2
+ARG JOBS=4
 ENV MAKEFLAGS="-j${JOBS}"
 ENV MAX_JOBS=${JOBS}
+
+ENV FORCE_CUDA=1
+# ENV TORCH_CUDA_ARCH_LIST="8.9"
+ENV TORCH_CUDA_ARCH_LIST="12.0"
 
 RUN /opt/conda/bin/conda run -n conda \
     pip install --upgrade \
@@ -11,8 +15,10 @@ RUN /opt/conda/bin/conda run -n conda \
 RUN /opt/conda/bin/conda run -n conda \
     pip install --no-cache-dir -v \
     accelerate bitsandbytes huggingface_hub sentencepiece timm transformers
+
+# RUN /opt/conda/bin/conda run -n conda \
+#     pip install vllm==0.9.1 blobfile --no-build-isolation
     
-ENV TORCH_CUDA_ARCH_LIST="8.9"
 RUN /opt/conda/bin/conda run -n conda env MAX_JOBS=${MAX_JOBS} \
     pip install --no-cache-dir -v --no-build-isolation \
     flash-attn
@@ -33,7 +39,7 @@ RUN chmod +x /app/main.py
 
 WORKDIR /app/
 
-ENTRYPOINT ["bash", "-c", "source activate conda && exec python /app/main.py $*"]
+ENTRYPOINT ["bash", "-c", "source activate conda && exec python /app/main.py \"$@\"", "--"]
 
 # Default CMD with model and quantize flags
 CMD ["--model", "internvl3", "--quantize"]

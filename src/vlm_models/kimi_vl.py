@@ -1,7 +1,6 @@
 from PIL import Image
-from transformers import AutoModelForCausalLM, AutoProcessor, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoProcessor
 import torch
-
 
 from vlm_models.base_model import BaseVLMModel
 
@@ -14,10 +13,13 @@ def extract_thinking_and_summary(text: str, bot: str = "◁think▷", eot: str =
 
 OUTPUT_FORMAT = "--------Thinking--------\n{thinking}\n\n--------Summary--------\n{summary}"
 
-class KimiVLModel(BaseVLMModel):
-    def __init__(self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None):
+class Kimi_VL_Model(BaseVLMModel):
+    def __init__(
+        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None
+    ):
+        # TODO: support non-quantized models, not enough VRAM to test these
         checkpoint_mapping = {
-            "kimi-vl": "moonshotai/Kimi-VL-A3B-Thinking-2506", # Default checkpoint
+            "kimi-vl-a3b-thinking": "moonshotai/Kimi-VL-A3B-Thinking-2506",  # Default checkpoint
             "kimi-vl-a3b-thinking-2506": "moonshotai/Kimi-VL-A3B-Thinking-2506",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
@@ -25,34 +27,36 @@ class KimiVLModel(BaseVLMModel):
             raise ValueError(
                 f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
             )
-        super().__init__(checkpoint, system_prompt, prompt, quantize)  # Initialize the base class
+        super().__init__(
+            checkpoint, system_prompt, prompt, quantize
+        )  # Initialize the base class
 
     def _initialize_model(self):
-        # quantization_config = BitsAndBytesConfig(
-        #     load_in_8bit=True,
-        #     llm_int8_enable_fp32_cpu_offload=True,
-        #     llm_int8_skip_modules=[
-        #         "vision_model",
-        #         "qformer",
-        #         "language_projection",
-        #     ],
-        # ) if self.quantize else None
-        quantization_config = None
-        device_map = "auto"
         self.model = AutoModelForCausalLM.from_pretrained(
             self.checkpoint,
-            torch_dtype=torch.bfloat16,
-            quantization_config=quantization_config,
-            device_map=device_map,
+            torch_dtype="auto",
+            device_map="auto",
             trust_remote_code=True,
         )
-        self.processor = AutoProcessor.from_pretrained(self.checkpoint, trust_remote_code=True)
+        self.processor = AutoProcessor.from_pretrained(
+            self.checkpoint,
+            trust_remote_code=True,
+        )
 
     def _process_query(self, system_prompt, prompt):
+        query = f"{system_prompt}\n{prompt}"
         return [
+            # {
+            #     "role": "system",
+            #     "content": system_prompt,
+            # },
+            # {
+            #     "role": "user",
+            #     "content": prompt,
+            # },
             {
                 "role": "user",
-                "content": [{"type": "text", "text": f"{system_prompt}\n{prompt}"}],
+                "content": [{"type": "text", "text": query}],
             },
         ]
 
@@ -61,44 +65,16 @@ class KimiVLModel(BaseVLMModel):
         return image
 
     def _generate_response(self, image):
-        with torch.autocast(device_type="cuda", dtype=self.dtype):
-            # append the image into query
-            query = self.query
+        query = self.query
+        query["content"].append({"type": "image", "image": image})
 
-
-            # Format the conversation
-            convo_string = self.processor.apply_chat_template(
-                self.query, tokenize=False, add_generation_prompt=True
-            )
-            assert isinstance(convo_string, str)
-
-            # Process the inputs
-            inputs = self.processor(
-                text=[convo_string], images=[image], return_tensors="pt"
-            ).to("cuda")
-            inputs["pixel_values"] = inputs["pixel_values"].to(self.dtype)
-
-            with torch.no_grad():
-                # Generate the captions
-                generate_ids = self.model.generate(
-                    **inputs,
-                    max_new_tokens=512,
-                    do_sample=True,
-                    suppress_tokens=None,
-                    use_cache=True,
-                    temperature=0.6,
-                    top_k=None,
-                    top_p=0.9,
-                )[0]
-
-            # Trim off the prompt
-            generate_ids = generate_ids[inputs["input_ids"].shape[1] :]
-
-            # Decode the caption
-            caption = self.processor.tokenizer.decode(
-                generate_ids,
-                skip_special_tokens=True,
-                clean_up_tokenization_spaces=False,
-            )
-            caption = caption.strip()
-            return caption
+        text = self.processor.apply_chat_template(query, add_generation_prompt=True, return_tensors="pt",)
+        inputs = self.processor(images=[image], text=text, return_tensors="pt", padding=True, truncation=True,).to(self.model.device)
+        generated_ids = self.model.generate(**inputs, max_new_tokens=32768, temperature=0.8)
+        generated_ids_trimmed = [
+            out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+        ]
+        response = self.processor.batch_decode(
+            generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )[0]
+        return response

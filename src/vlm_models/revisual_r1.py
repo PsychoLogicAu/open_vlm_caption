@@ -1,7 +1,7 @@
 from PIL import Image
 from transformers import (
     AutoProcessor,
-    Qwen2_5_VLForConditionalGeneration, 
+#     Qwen2_5_VLForConditionalGeneration, 
     BitsAndBytesConfig,
 )
 import torch
@@ -56,12 +56,16 @@ class RevisualR1Model(BaseVLMModel):
         prompt = "You FIRST think about the reasoning process as an internal monologue and then provide the final answer. The reasoning process MUST BE enclosed within <think> </think> tags. The final answer MUST BE put in \\boxed{}."
         question="xxx"
         '''
+
+        '''
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             self.checkpoint,
             torch_dtype=self.dtype,
             quantization_config=quantization_config,
             device_map="auto",
         ).eval()
+        '''
+        self.model = None
         min_pixels = 256*28*28
         max_pixels = 1280*28*28
         self.processor = AutoProcessor.from_pretrained(
