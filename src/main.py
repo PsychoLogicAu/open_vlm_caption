@@ -30,7 +30,7 @@ def main(args):
     logging.basicConfig(level=logging.INFO)
 
     system_prompt_path = f"/data/{args.system_prompt}"
-    query_path = f"/data/{args.user_prompt}"
+    user_prompt_path = f"/data/{args.user_prompt}"
     image_dir = "/data/images/"
 
     # Process images
@@ -38,11 +38,35 @@ def main(args):
 
     # Load prompts
     with open(system_prompt_path, "r") as f:
-        system_prompt = f.read()
-    with open(query_path, "r") as f:
-        query = f.read()
+        system_prompt_template = f.read()
+
+    with open(user_prompt_path, "r") as f:
+        user_prompt_template = f.read()
+
+    if args.subject_name:
+        subject_name_clause = f' using the name "{args.subject_name}"'
+        subject_name_pose_clause = f' using the name "{args.subject_name}" where appropriate'
+        subject_name_pronoun_clause = (
+            f'When referring to the subject, always use the name "{args.subject_name}". '
+            'Avoid the use of pronouns like "he", "she", or "they" where appropriate. Repeat the name when needed.'
+        )
+    else:
+        subject_name_clause = ''
+        subject_name_pose_clause = ''
+        subject_name_pronoun_clause = ''
+
+    system_prompt = system_prompt_template.format(
+        subject_name_pronoun_clause=subject_name_pronoun_clause,
+    )
+    user_prompt = user_prompt_template.format(
+        subject_name_clause=subject_name_clause,
+        subject_name_pose_clause=subject_name_pose_clause,
+    )
+    if args.content_hint:
+        user_prompt = f"{user_prompt}\nContent hint: {args.content_hint}"
+
     logging.info(f"System prompt: {system_prompt}")
-    logging.info(f"User prompt: {query}")
+    logging.info(f"User prompt: {user_prompt}")
 
     if "HF_TOKEN" in os.environ and os.environ["HF_TOKEN"]:
         logging.info("Logging in to the Hugging Face Hub")
@@ -53,7 +77,7 @@ def main(args):
         model = vlm_models.Blip2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("deepseek-vl2"):
@@ -62,42 +86,51 @@ def main(args):
         model = deepseekvl2.DeepSeekVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("instructblip"):
         model = vlm_models.InstructBlipModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("internvl2"):
         model = vlm_models.InternVL2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("internvl3"):
         model = vlm_models.InternVL3Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
+            thinking=args.thinking,
         )
     elif args.model.startswith("joycaption"):
         model = vlm_models.JoyCaptionModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
+    elif args.model.startswith("kimi-vl"):
+        # model = vlm_models.Kimi_VL_Model(
+        #     checkpoint=args.model,
+        #     system_prompt=system_prompt,
+        #     prompt=user_prompt,
+        #     quantize=args.quantize,
+        # )
+        raise Exception("computer says no")
     elif args.model.startswith("minicpm"):
         model = vlm_models.MiniCPM_V_2_6(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis1.6"):
@@ -106,30 +139,46 @@ def main(args):
         model = vlm_models.Ovis1_6Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("ovis2"):
+        '''
         model = vlm_models.Ovis2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
+        '''
     elif args.model.startswith("paligemma2"):
         from vlm_models import pali_gemma2
 
         model = pali_gemma2.PaliGemma2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("phi"):
         model = vlm_models.PhiModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("qwen2.5"):
+        model = vlm_models.Qwen2_5VLModel(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("revisual-r1"):
+        model = vlm_models.RevisualR1Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
             quantize=args.quantize,
         )
     elif args.model.startswith("wepoints"):
@@ -138,8 +187,16 @@ def main(args):
         model = wepoints.WePOINTSModel(
             checkpoint=args.model,
             system_prompt=system_prompt,
-            prompt=query,
+            prompt=user_prompt,
             quantize=args.quantize,
+        )
+    elif args.model.startswith("yannqi-r"):
+        model = vlm_models.YannQiRModel(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+            thinking=args.thinking,
         )
     else:
         raise ValueError(f"Unsupported model type: {args.model}")
@@ -150,7 +207,11 @@ def main(args):
 
     batch = []
     batch_output_paths = []
+    batch_processing = args.batch_size > 1
+
+    i = 0
     for img_path in img_paths:
+        i = i + 1
         output_path = os.path.join(
             output_dir, os.path.splitext(os.path.basename(img_path))[0] + ".txt"
         )
@@ -158,7 +219,7 @@ def main(args):
             logging.info(f"Skipping {img_path}, output already exists")
             continue
 
-        if args.batch_size > 1:
+        if batch_processing:
             batch.append(img_path)
             batch_output_paths.append(output_path)
             # TODO: This will miss the last batch if the number of images is not a multiple of the batch size
@@ -166,10 +227,11 @@ def main(args):
                 continue
 
         start_time = datetime.now()
-        if args.batch_size > 1:
+        if batch_processing:
             try:
                 responses = model.batch_caption_images(batch)
                 for i, response in enumerate(responses):
+                    response = response.replace("\n", " ") if args.replace_newlines else response
                     logging.info(f"Processed {batch[i]} : {response}")
                     with open(batch_output_paths[i], "w") as f:
                         f.write(response)
@@ -180,6 +242,7 @@ def main(args):
             try:
                 response = model.caption_image(img_path)
                 with open(output_path, "w") as f:
+                    response = response.replace("\n", " ") if args.replace_newlines else response
                     logging.info(f"Processed {img_path} : {response}")
                     f.write(response)
             except Exception as e:
@@ -188,13 +251,14 @@ def main(args):
 
         end_time = datetime.now()
         execution_time = end_time - start_time
-        if args.batch_size > 1:
+        progress = (100 * i / float(len(img_paths)))
+        if batch_processing:
             logging.info(
-                f"Processed batch in {execution_time.total_seconds()}s: {batch}"
+                f"[{progress}%] Processed batch in {execution_time.total_seconds()}s: {batch}"
             )
         else:
             logging.info(
-                f"Processed image in {execution_time.total_seconds()}s: {img_path}"
+                f"[{progress}%] Processed image in {execution_time.total_seconds()}s: {img_path}"
             )
 
         batch = []
@@ -218,6 +282,18 @@ def parse_args():
     )
     parser.add_argument(
         "--user_prompt", type=str, default="query.txt", help="User prompt"
+    )
+    parser.add_argument(
+        "--subject_name", type=str, default="", help="Subject name"
+    )
+    parser.add_argument(
+        "--content_hint", type=str, default="", help="Content hint for the captioner"
+    )
+    parser.add_argument(
+        "--thinking", action="store_true", help="Use thinking (InternVL3.5, YannQi/R)"
+    )
+    parser.add_argument(
+        "--replace_newlines", action="store_true", help="Replace newline characters in output captions with ' '"
     )
     return parser.parse_args()
 

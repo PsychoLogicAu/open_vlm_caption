@@ -85,21 +85,41 @@ def load_image(image_file, input_size=448, max_num=12):
     pixel_values = torch.stack(pixel_values)
     return pixel_values
 
+R1_SYSTEM_PROMPT = """
+You are an AI assistant that rigorously follows this response protocol:
+
+1. First, conduct a detailed analysis of the question. Consider different angles, potential solutions, and reason through the problem step-by-step. Enclose this entire thinking process within <think> and </think> tags.
+
+2. After the thinking section, provide a clear, concise, and direct answer to the user's question. Separate the answer from the think section with a newline.
+
+Ensure that the thinking process is thorough but remains focused on the query. The final answer should be standalone and not reference the thinking section.
+""".strip()
 
 class InternVL3Model(BaseVLMModel):
     def __init__(
-        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None
+        self, system_prompt: str, prompt: str, quantize: bool, checkpoint: str = None, thinking: bool = False,
     ):
         checkpoint_mapping = {
             "internvl3": "OpenGVLab/InternVL3-8B",  # Default checkpoint
             "internvl3-8b": "OpenGVLab/InternVL3-8B",
             "internvl3-9b": "OpenGVLab/InternVL3-9B",
+            "internvl3-14b": "OpenGVLab/InternVL3-14B",
+            "internvl3.5-8b": "OpenGVLab/InternVL3_5-8B",
+            "internvl3.5-14b": "OpenGVLab/InternVL3_5-14B",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
             raise ValueError(
                 f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
             )
+        
+        # Only 3.5 support thinking mode
+        self.thinking = thinking
+        if self.thinking:
+            assert checkpoint.startswith("OpenGVLab/InternVL3_5") and "Thinking mode only available for InternVL3_5 models"
+        self.max_tiles = 12
+        self.max_new_tokens = 2048
+        
         super().__init__(
             checkpoint, system_prompt, prompt, quantize
         )  # Initialize the base class
@@ -133,6 +153,10 @@ class InternVL3Model(BaseVLMModel):
             trust_remote_code=True,
         ).eval()
 
+        if self.thinking:
+            print("---- Using Thinking Mode ----")
+            self.model.system_message = R1_SYSTEM_PROMPT
+
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.checkpoint,
             trust_remote_code=True,
@@ -144,12 +168,11 @@ class InternVL3Model(BaseVLMModel):
         return f"<image>\n{query}"
 
     def _preprocess_image(self, img_path):
-        max_tiles = 12
-        pixel_values = load_image(img_path, max_num=max_tiles).to(torch.bfloat16).cuda()
+        pixel_values = load_image(img_path, max_num=self.max_tiles).to(torch.bfloat16).cuda()
         return pixel_values
 
     def _generate_response(self, image):
-        generation_config = dict(max_new_tokens=1024, do_sample=True)
+        generation_config = dict(max_new_tokens=self.max_new_tokens, do_sample=True, temperature=0.6)
         response = self.model.chat(self.tokenizer, image, self.query, generation_config)
         return response
 
@@ -164,7 +187,7 @@ class InternVL3Model(BaseVLMModel):
             ]
             pixel_values = torch.cat(pixel_values_list, dim=0)
             questions = [self.query] * len(num_patches_list)
-            generation_config = dict(max_new_tokens=1024, do_sample=True)
+            generation_config = dict(max_new_tokens=self.max_new_tokens, do_sample=True)
             responses = self.model.batch_chat(
                 self.tokenizer,
                 pixel_values,

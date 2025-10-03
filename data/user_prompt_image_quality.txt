@@ -1,0 +1,1 @@
+Write only an image quality caption for this image. Restrict the description to technical details such as sharpness, blur, pixelation, noise, compression artifacts, and overall clarity. Do not mention objects, people, scenery, composition, or lighting. Output only the quality evaluation.
