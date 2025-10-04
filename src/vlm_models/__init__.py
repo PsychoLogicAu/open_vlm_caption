@@ -1,3 +1,4 @@
+from .apriel import Apriel_1_5_Model
 from .base_model import BaseVLMModel
 from .blip2 import Blip2Model
 from .instructblip import InstructBlipModel
@@ -14,6 +15,7 @@ from .revisual_r1 import RevisualR1Model
 from .yannqi_r import YannQiRModel
 
 __all__ = [
+    "Apriel_1_5_Model",
     "BaseVLMModel",
     "Blip2Model",
     "InstructBlipModel",

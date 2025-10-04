@@ -73,7 +73,15 @@ def main(args):
         huggingface_hub.login(token=os.environ["HF_TOKEN"])
 
     # Initialize model
-    if args.model.startswith("blip2"):
+    if args.model.startswith("apriel"):
+        model = vlm_models.Apriel_1_5_Model(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+            thinking=args.thinking,
+        )
+    elif args.model.startswith("blip2"):
         model = vlm_models.Blip2Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
