@@ -31,13 +31,10 @@ class Qwen2_5VLModel(BaseVLMModel):
             self.checkpoint,
             torch_dtype=torch_dtype,
             device_map=device_map,
-            # low_cpu_mem_usage=True,
-            trust_remote_code=True,
         ).eval()
 
         self.processor = AutoProcessor.from_pretrained(
             self.checkpoint,
-            trust_remote_code=True,
             use_fast=False,
         )
 
@@ -77,9 +74,12 @@ class Qwen2_5VLModel(BaseVLMModel):
         # Inference: Generation of the output
         generated_ids = self.model.generate(**inputs, max_new_tokens=1024)
         generated_ids_trimmed = [
-            out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+            out_ids[len(in_ids) :]
+            for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]
         response = self.processor.batch_decode(
-            generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+            generated_ids_trimmed,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
         )
         return response[0]

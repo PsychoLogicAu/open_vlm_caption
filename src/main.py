@@ -175,8 +175,15 @@ def main(args):
             prompt=user_prompt,
             quantize=args.quantize,
         )
-    elif args.model.startswith("qwen2.5"):
+    elif args.model.startswith("qwen2.5-vl"):
         model = vlm_models.Qwen2_5VLModel(
+            checkpoint=args.model,
+            system_prompt=system_prompt,
+            prompt=user_prompt,
+            quantize=args.quantize,
+        )
+    elif args.model.startswith("qwen3-vl"):
+        model = vlm_models.Qwen3_VL_Model(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=user_prompt,
