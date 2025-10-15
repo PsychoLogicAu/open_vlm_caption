@@ -11,6 +11,7 @@ from .minicpm_v_2_6 import MiniCPM_V_2_6
 # from .ovis2 import Ovis2Model
 from .phi import PhiModel
 from .qwen2_5 import Qwen2_5VLModel
+from .qwen3 import Qwen3_VL_Model
 from .revisual_r1 import RevisualR1Model
 from .yannqi_r import YannQiRModel
 
@@ -27,7 +28,8 @@ __all__ = [
     # "Ovis1_6Model",
     # "Ovis2Model",
     "PhiModel",
-    "Qwen2_5VLModel"
+    "Qwen2_5VLModel",
+    "Qwen3_VL_Model",
     "RevisualR1Model",
     "YannQiRModel",
 ]

@@ -174,6 +174,8 @@ class InternVL3Model(BaseVLMModel):
     def _generate_response(self, image):
         generation_config = dict(max_new_tokens=self.max_new_tokens, do_sample=True, temperature=0.6)
         response = self.model.chat(self.tokenizer, image, self.query, generation_config)
+        if "</think>" in response:
+            response = response.split("</think>", 1)[1].strip()
         return response
 
     def _generate_batch_response(self, img_paths):

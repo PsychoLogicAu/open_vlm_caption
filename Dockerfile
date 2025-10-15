@@ -13,8 +13,12 @@ RUN /opt/conda/bin/conda run -n conda \
     pip wheel setuptools ninja
 
 RUN /opt/conda/bin/conda run -n conda \
-    pip install --no-cache-dir -v \
-    accelerate bitsandbytes huggingface_hub sentencepiece timm transformers
+    pip install --no-cache-dir -v --upgrade \
+    accelerate bitsandbytes huggingface_hub sentencepiece timm 
+    
+#transformers==4.57.0
+RUN /opt/conda/bin/conda run -n conda \
+    pip install -v git+https://github.com/huggingface/transformers
 
 # RUN /opt/conda/bin/conda run -n conda \
 #     pip install vllm==0.9.1 blobfile --no-build-isolation
