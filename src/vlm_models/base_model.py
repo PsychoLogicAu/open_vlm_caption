@@ -70,11 +70,12 @@ class BaseVLMModel(ABC):
         3. Ensuring dimensions are multiples of the stride (rounding down).
         4. Never upscaling the image beyond its original size.
 
+        Note:
+            If the image dimensions are less than configured stride, the image will be upscaled to stride.
+            As such small images are unlikely to be supplied in the use case, this is ignored.
+
         Args:
-            img_path (str): The file path to the image.
-            max_dim (int): The maximum allowed side length.
-            target_mp (float): The desired image size in Megapixels (e.g., 1.0 for 1MP).
-            stride (int): The new dimensions must be a multiple of this value.
+            image (PIL.Image): The RGB image to downscale.
 
         Returns:
             PIL.Image: The downscaled RGB image.

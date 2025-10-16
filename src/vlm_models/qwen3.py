@@ -25,10 +25,10 @@ class Qwen3_VL_Model(BaseVLMModel):
             raise ValueError(
                 f"Checkpoint {checkpoint} not found. Available checkpoints are: {list(checkpoint_mapping.keys())}"
             )
-        self.moe_model = "a3b" in checkpoint
         super().__init__(
             checkpoint, system_prompt, prompt, quantize
         )  # Initialize the base class
+        self.moe_model = "A3B" in self.checkpoint
         self.supports_batch = False
 
     def _initialize_model(self):
