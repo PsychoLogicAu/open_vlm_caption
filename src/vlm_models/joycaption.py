@@ -71,6 +71,7 @@ class JoyCaptionModel(BaseVLMModel):
 
     def _preprocess_image(self, img_path):
         image = Image.open(img_path).convert("RGB")
+        image = super().downscale_image(image)
         return image
 
     def _generate_response(self, image):
