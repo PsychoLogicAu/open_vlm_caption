@@ -1,6 +1,7 @@
 from PIL import Image
 from transformers import (
     Qwen3VLForConditionalGeneration,
+    Qwen3VLMoeForConditionalGeneration,
     AutoProcessor,
 )
 import torch
@@ -17,6 +18,7 @@ class Qwen3_VL_Model(BaseVLMModel):
             "qwen3-vl-4b-thinking": "Qwen/Qwen3-VL-4B-Thinking",
             "qwen3-vl-8b-instruct": "Qwen/Qwen3-VL-8B-Instruct",
             "qwen3-vl-8b-thinking": "Qwen/Qwen3-VL-8B-Thinking",
+            "qwen3-vl-30b-a3b-instruct": "cpatonn/Qwen3-VL-30B-A3B-Instruct-AWQ-4bit" if quantize else "Qwen/Qwen3-VL-30B-A3B-Instruct",
         }
         checkpoint = checkpoint_mapping.get(checkpoint, None)
         if checkpoint is None:
@@ -26,17 +28,27 @@ class Qwen3_VL_Model(BaseVLMModel):
         super().__init__(
             checkpoint, system_prompt, prompt, quantize
         )  # Initialize the base class
+        self.moe_model = "A3B" in self.checkpoint
         self.supports_batch = False
 
     def _initialize_model(self):
         torch_dtype = torch.bfloat16
         device_map = "cuda"
-        self.model = Qwen3VLForConditionalGeneration.from_pretrained(
-            self.checkpoint,
-            dtype=torch_dtype,
-            attn_implementation="flash_attention_2",
-            device_map=device_map,
-        ).eval()
+        self.model = (
+            Qwen3VLMoeForConditionalGeneration.from_pretrained(
+                self.checkpoint,
+                dtype=torch_dtype,
+                attn_implementation="flash_attention_2",
+                device_map=device_map,
+            ).eval()
+            if self.moe_model
+            else Qwen3VLForConditionalGeneration.from_pretrained(
+                self.checkpoint,
+                dtype=torch_dtype,
+                attn_implementation="flash_attention_2",
+                device_map=device_map,
+            ).eval()
+        )
         self.processor = AutoProcessor.from_pretrained(
             self.checkpoint,
         )
@@ -58,6 +70,7 @@ class Qwen3_VL_Model(BaseVLMModel):
 
     def _preprocess_image(self, img_path):
         image = Image.open(img_path).convert("RGB")
+        image = super().downscale_image(image)
         return image
 
     def _generate_response(self, image):
@@ -80,15 +93,27 @@ class Qwen3_VL_Model(BaseVLMModel):
         }
 
         # Define Generation Hyperparameters
-        generation_args = {
-            "max_new_tokens": 4096,
-            "do_sample": True,
-            "top_p": 0.95,
-            "top_k": 20,
-            "temperature": 0.8,
-            "repetition_penalty": 1.1,
-            # "presence_penalty": 0.0,
-        }
+        generation_args = (
+            {
+                "max_new_tokens": 4096,
+                # "do_sample": True,
+                # "top_p": 0.95,  # <- Adjusted
+                # "top_k": 20,
+                # "temperature": 0.6, # <- Adjusted
+                # "repetition_penalty": 1.1,
+                # # "presence_penalty": 0.0,
+            }
+            if self.moe_model
+            else {
+                "max_new_tokens": 4096,
+                "do_sample": True,
+                "top_p": 0.95,
+                "top_k": 20,
+                "temperature": 0.8,
+                "repetition_penalty": 1.1,
+                # "presence_penalty": 0.0,
+            }
+        )
         generated_ids = self.model.generate(**inputs, **generation_args)
         generated_ids_trimmed = [
             out_ids[len(in_ids) :]

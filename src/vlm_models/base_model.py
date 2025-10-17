@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from PIL import Image
 import imghdr
 import logging
+import math
 
 
 class BaseVLMModel(ABC):
@@ -11,6 +13,10 @@ class BaseVLMModel(ABC):
         self.model = None
         self.tokenizer = None
         self.supports_batch = False
+        # TODO: downscale params from arguments / config
+        self.image_downscale_max_dim=1280
+        self.image_downscale_target_mp=1.0
+        self.image_downscale_stride=64
         self._initialize_model()
 
         if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
@@ -53,4 +59,73 @@ class BaseVLMModel(ABC):
             return self._generate_batch_response(img_paths)
         else:
             raise ValueError("Batch processing not supported by this model")
+        
+    def downscale_image(self, image):
+        """
+        Opens, converts, and resizes an image while maintaining aspect ratio.
+        
+        The logic prioritizes:
+        1. Scaling down to meet the max_dim constraint.
+        2. Scaling down (if needed) to meet the target_mp constraint.
+        3. Ensuring dimensions are multiples of the stride (rounding down).
+        4. Never upscaling the image beyond its original size.
+
+        Note:
+            If the image dimensions are less than configured stride, the image will be upscaled to stride.
+            As such small images are unlikely to be supplied in the use case, this is ignored.
+
+        Args:
+            image (PIL.Image): The RGB image to downscale.
+
+        Returns:
+            PIL.Image: The downscaled RGB image.
+        """
+        width, height = image.size
+        
+        # Target pixel count (e.g., 1.0 MP = 1,000,000 pixels)
+        target_pixels = self.image_downscale_target_mp * 1_000_000.0
+        current_pixels = width * height
+        
+        # 1. Determine the maximum allowed scale factor for downscaling (should be <= 1.0)
+        
+        # a. Constraint from max_dim
+        scale_by_max_dim = min(self.image_downscale_max_dim / width, self.image_downscale_max_dim / height) if max(width, height) > self.image_downscale_max_dim else 1.0
+        
+        # b. Constraint from target_mp (using square root of ratio to find side scaling factor)
+        # The scale factor for sides is the square root of the scale factor for area (pixels)
+        scale_by_target_mp = 1.0
+        if current_pixels > target_pixels:
+            scale_by_target_mp = math.sqrt(target_pixels / current_pixels)
             
+        # c. Choose the *smallest* scale factor to satisfy all constraints (and ensure downscaling)
+        # This factor will be <= 1.0
+        scale_factor = min(scale_by_max_dim, scale_by_target_mp)
+        
+        # 2. Compute the new dimensions
+        new_width = int(width * scale_factor)
+        new_height = int(height * scale_factor)
+
+        # 3. Apply the stride (modulo) constraint
+        
+        def round_down_to_multiple(dim, stride):
+            # Round the dimension down to the nearest multiple of stride
+            return math.floor(dim / stride) * stride
+
+        final_width = round_down_to_multiple(new_width, self.image_downscale_stride)
+        final_height = round_down_to_multiple(new_height, self.image_downscale_stride)
+
+        # Ensure final dimensions are at least 'stride' (prevents zero dimensions for tiny inputs)
+        final_width = max(self.image_downscale_stride, final_width)
+        final_height = max(self.image_downscale_stride, final_height)
+
+        # 4. Resize and return
+        # Use LANCZOS (high-quality) for downsampling
+        resized_image = image.resize(
+            (final_width, final_height), 
+            Image.Resampling.LANCZOS
+        )
+
+        if scale_factor < 1.0:
+            logging.debug(f"Downscaled image from ({width}, {height}) to ({final_width}, {final_height}).")
+        
+        return resized_image

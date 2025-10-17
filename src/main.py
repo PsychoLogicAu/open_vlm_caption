@@ -293,10 +293,10 @@ def parse_args():
     )
     # Note: paths relative to data/
     parser.add_argument(
-        "--system_prompt", type=str, default="system_prompt.txt", help="System prompt"
+        "--system_prompt", type=str, default="system_prompt_example.txt", help="System prompt"
     )
     parser.add_argument(
-        "--user_prompt", type=str, default="query.txt", help="User prompt"
+        "--user_prompt", type=str, default="user_prompt_example.txt", help="User prompt"
     )
     parser.add_argument(
         "--subject_name", type=str, default="", help="Subject name"
