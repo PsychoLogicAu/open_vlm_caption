@@ -72,149 +72,159 @@ def main(args):
         logging.info("Logging in to the Hugging Face Hub")
         huggingface_hub.login(token=os.environ["HF_TOKEN"])
 
-    # Initialize model
-    if args.model.startswith("apriel"):
-        model = vlm_models.Apriel_1_5_Model(
+    if args.openai_api_base_url:
+        logging.info(f"Using vLLM OpenAI API client")
+        model = vlm_models.VLLM_OpenAI_Client(
             checkpoint=args.model,
             system_prompt=system_prompt,
             prompt=user_prompt,
-            quantize=args.quantize,
-            thinking=args.thinking,
-        )
-    elif args.model.startswith("blip2"):
-        model = vlm_models.Blip2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("deepseek-vl2"):
-        from vlm_models import deepseekvl2
-
-        model = deepseekvl2.DeepSeekVL2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("instructblip"):
-        model = vlm_models.InstructBlipModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("internvl2"):
-        model = vlm_models.InternVL2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("internvl3"):
-        model = vlm_models.InternVL3Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-            thinking=args.thinking,
-        )
-    elif args.model.startswith("joycaption"):
-        model = vlm_models.JoyCaptionModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("kimi-vl"):
-        # model = vlm_models.Kimi_VL_Model(
-        #     checkpoint=args.model,
-        #     system_prompt=system_prompt,
-        #     prompt=user_prompt,
-        #     quantize=args.quantize,
-        # )
-        raise Exception("computer says no")
-    elif args.model.startswith("minicpm"):
-        model = vlm_models.MiniCPM_V_2_6(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("ovis1.6"):
-        from vlm_models import Ovis1_6Model
-        
-        model = vlm_models.Ovis1_6Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("ovis2"):
-        '''
-        model = vlm_models.Ovis2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-        '''
-    elif args.model.startswith("paligemma2"):
-        from vlm_models import pali_gemma2
-
-        model = pali_gemma2.PaliGemma2Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("phi"):
-        model = vlm_models.PhiModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("qwen2.5-vl"):
-        model = vlm_models.Qwen2_5VLModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("qwen3-vl"):
-        model = vlm_models.Qwen3_VL_Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("revisual-r1"):
-        model = vlm_models.RevisualR1Model(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("wepoints"):
-        from vlm_models import wepoints
-
-        model = wepoints.WePOINTSModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-        )
-    elif args.model.startswith("yannqi-r"):
-        model = vlm_models.YannQiRModel(
-            checkpoint=args.model,
-            system_prompt=system_prompt,
-            prompt=user_prompt,
-            quantize=args.quantize,
-            thinking=args.thinking,
+            openai_api_key=args.openai_api_key,
+            openai_api_base_url=args.openai_api_base_url,
         )
     else:
-        raise ValueError(f"Unsupported model type: {args.model}")
+        # Initialize model
+        if args.model.startswith("apriel"):
+            model = vlm_models.Apriel_1_5_Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+                thinking=args.thinking,
+            )
+        elif args.model.startswith("blip2"):
+            model = vlm_models.Blip2Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("deepseek-vl2"):
+            from vlm_models import deepseekvl2
+
+            model = deepseekvl2.DeepSeekVL2Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("instructblip"):
+            model = vlm_models.InstructBlipModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("internvl2"):
+            model = vlm_models.InternVL2Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("internvl3") or args.model.startswith("neo1_0"):
+            model = vlm_models.InternVL3Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+                thinking=args.thinking,
+            )
+        elif args.model.startswith("joycaption"):
+            model = vlm_models.JoyCaptionModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("kimi-vl"):
+            # model = vlm_models.Kimi_VL_Model(
+            #     checkpoint=args.model,
+            #     system_prompt=system_prompt,
+            #     prompt=user_prompt,
+            #     quantize=args.quantize,
+            # )
+            raise Exception("computer says no")
+        elif args.model.startswith("minicpm"):
+            model = vlm_models.MiniCPM_V_2_6(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("ovis1.6"):
+            from vlm_models import Ovis1_6Model
+            
+            model = vlm_models.Ovis1_6Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("ovis2"):
+            '''
+            model = vlm_models.Ovis2Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+            '''
+        elif args.model.startswith("paligemma2"):
+            from vlm_models import pali_gemma2
+
+            model = pali_gemma2.PaliGemma2Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("phi"):
+            model = vlm_models.PhiModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("qwen2.5-vl"):
+            model = vlm_models.Qwen2_5VLModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("qwen3-vl"):
+            model = vlm_models.Qwen3_VL_Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("revisual-r1"):
+            model = vlm_models.RevisualR1Model(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("wepoints"):
+            from vlm_models import wepoints
+
+            model = wepoints.WePOINTSModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+            )
+        elif args.model.startswith("yannqi-r"):
+            model = vlm_models.YannQiRModel(
+                checkpoint=args.model,
+                system_prompt=system_prompt,
+                prompt=user_prompt,
+                quantize=args.quantize,
+                thinking=args.thinking,
+            )
+        else:
+            raise ValueError(f"Unsupported model type: {args.model}")
 
     output_base_dir = "/data/output/"
     output_dir = output_base_dir + model.checkpoint_name()
@@ -284,6 +294,12 @@ def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--openai_api_key", type=str, help="API key for OpenAI API client"
+    )
+    parser.add_argument(
+        "--openai_api_base_url", type=str, help="Base URL for OpenAI API client"
+    )
     parser.add_argument(
         "--model", type=str, default="internvl3", help="Model type to use"
     )
