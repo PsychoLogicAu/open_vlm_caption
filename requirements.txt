@@ -11,3 +11,7 @@ compressed-tensors
 
 # Added for ovis quantized models
 # gptqmodel
+
+# For vLLM OpenAI client
+vllm
+openai

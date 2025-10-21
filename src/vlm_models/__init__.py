@@ -13,6 +13,7 @@ from .phi import PhiModel
 from .qwen2_5 import Qwen2_5VLModel
 from .qwen3 import Qwen3_VL_Model
 from .revisual_r1 import RevisualR1Model
+from .vllm_openai_client import VLLM_OpenAI_Client
 from .yannqi_r import YannQiRModel
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "Qwen2_5VLModel",
     "Qwen3_VL_Model",
     "RevisualR1Model",
+    "VLLM_OpenAI_Client",
     "YannQiRModel",
 ]

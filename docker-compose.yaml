@@ -43,6 +43,7 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+    network_mode: "host"
     # networks:
     #   - isolated_network
 

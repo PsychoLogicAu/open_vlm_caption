@@ -6,7 +6,7 @@ import math
 
 
 class BaseVLMModel(ABC):
-    def __init__(self, checkpoint: str, system_prompt: str, prompt: str, quantize: bool):
+    def __init__(self, checkpoint: str, system_prompt: str, prompt: str, quantize: bool = False):
         self.checkpoint = checkpoint
         self.query = self._process_query(system_prompt, prompt)
         self.quantize = quantize
