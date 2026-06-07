@@ -5,6 +5,12 @@ from openai import OpenAI, AsyncOpenAI
 import base64
 from io import BytesIO
 
+import logging
+# Silence the httpx and openai loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 from vlm_models.base_model import BaseVLMModel
 
 
@@ -120,7 +126,7 @@ class VLLM_OpenAI_Client(BaseVLMModel):
                 return chat_response.choices[0].message.content
             except Exception as e:
                 print(f"Error processing image {img_path}: {e}")
-                return f"ERROR: {e}"
+                raise
 
         async def main():
             """Creates and runs all concurrent tasks."""
@@ -137,3 +143,23 @@ class VLLM_OpenAI_Client(BaseVLMModel):
             
         return all_responses
         
+    async def caption_image_async(self, img_path: str):
+        """Purely async call for a single image, no asyncio.run() inside."""
+        # 1. Preprocess (Note: PIL open is sync, but fast enough)
+        image = self._preprocess_image(img_path)
+        data_uri = self._encode_image_to_data_uri(image, format="PNG")
+        
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": f"{self.system_prompt}\n{self.user_prompt}"},
+                {"type": "image_url", "image_url": {"url": data_uri}},
+            ],
+        }]
+        
+        # 2. Await the response from the async client
+        chat_response = await self.async_client.chat.completions.create(
+            model=self.checkpoint,
+            messages=messages,
+        )
+        return chat_response.choices[0].message.content

@@ -4,7 +4,7 @@ FROM continuumio/miniconda3:latest AS python_base
 # Update and install essential packages
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y bash curl git wget software-properties-common
+    apt-get install -y bash curl git wget
 
 # Create Conda environment
 ENV PYTHON_VERSION=3.11

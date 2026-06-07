@@ -25,6 +25,59 @@ def create_output_dir(output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+import asyncio
+from tqdm.asyncio import tqdm
+
+async def process_all_images(model, img_paths, output_dir, args):
+    # Limit how many images are being processed by the GPU at once
+    # Set this to ~2x your vLLM --max-num-seqs for best results
+    semaphore = asyncio.Semaphore(args.batch_size)
+
+    # 1. Filter the list synchronously for images already processed
+    to_process = []
+    skipped_count = 0
+    for path in img_paths:
+        output_path = os.path.join(
+            output_dir, os.path.splitext(os.path.basename(path))[0] + ".txt"
+        )
+        if os.path.exists(output_path):
+            skipped_count += 1
+        else:
+            to_process.append(path)
+
+    print(f"Skipping {skipped_count} already processed images. {len(to_process)} remaining.")
+
+    async def task(img_path):
+        async with semaphore:
+            output_path = os.path.join(
+                output_dir, os.path.splitext(os.path.basename(img_path))[0] + ".txt"
+            )
+            
+            if os.path.exists(output_path):
+                return "skipped"
+
+            try:
+                response = await model.caption_image_async(img_path)
+                if args.replace_newlines:
+                    response = response.replace("\n", " ")
+                
+                with open(output_path, "w") as f:
+                    f.write(response)
+                return "success"
+            except Exception as e:
+                logging.error(f"Failed {img_path}: {e}")
+                return "failed"
+
+    tasks = [task(path) for path in to_process]
+
+    with tqdm(total=len(img_paths), desc="Captioning Images", unit="img", smoothing=0.1) as pbar:
+        pbar.update(skipped_count)
+        
+        # Now the loop only handles real GPU work
+        for f in asyncio.as_completed(tasks):
+            await f
+            pbar.update(1)
+
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -233,6 +286,10 @@ def main(args):
     batch = []
     batch_output_paths = []
     batch_processing = args.batch_size > 1
+
+    if batch_processing:
+        asyncio.run(process_all_images(model, img_paths, output_dir, args))
+        return
 
     i = 0
     for img_path in img_paths:
